@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riderr | Login or Register</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="app-shell auth-page">
+    <header class="site-header">
+      <div class="brand">
+        <a href="index.html">
+          <div class="logo">🚌</div>
+          <div>
+            <h1>Riderr</h1>
+            <p>Easy bus booking for every traveler.</p>
+          </div>
+        </a>
+      </div>
+      <nav></nav>
+    </header>
+
+    <main class="auth-hero">
+      <div class="auth-card">
+        <div class="auth-heading">
+          <span class="eyebrow">Account access</span>
+          <h2>Sign in or create a new account</h2>
+          <p>Register once and keep your trips, tickets, and preferences in one place.</p>
+        </div>
+
+        <div class="auth-toggle">
+          <button type="button" class="toggle-btn active" data-auth-target="login">Sign In</button>
+          <button type="button" class="toggle-btn" data-auth-target="register">Register</button>
+        </div>
+
+        <form id="login-form" class="login-form">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" required />
+
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="********" required />
+
+          <div class="field-group checkbox-group">
+            <label class="checkbox-label">
+              <input id="show-password-login" type="checkbox" /> Show password
+            </label>
+          </div>
+
+          <button type="submit" class="primary-button">Sign in</button>
+
+        </form>
+
+        <form id="register-form" class="login-form hidden">
+          <label for="name">Full name</label>
+          <input id="name" type="text" placeholder="Jane Doe" required />
+
+          <label for="register-email">Email</label>
+          <input id="register-email" type="email" placeholder="you@example.com" required />
+
+          <label for="register-password">Password</label>
+          <input id="register-password" type="password" placeholder="********" required />
+
+          <label for="confirm-password">Confirm password</label>
+          <input id="confirm-password" type="password" placeholder="********" required />
+
+          <div class="field-group checkbox-group">
+            <label class="checkbox-label">
+              <input id="show-password-register" type="checkbox" /> Show passwords
+            </label>
+          </div>
+
+          <button type="submit" class="primary-button">Create account</button>
+          <p class="note">After registration, you can sign in and continue booking.</p>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+
+    // Toggle forms
+    const toggleBtns = document.querySelectorAll('.toggle-btn');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    toggleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        toggleBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        if (btn.dataset.authTarget === 'login') {
+          loginForm.classList.remove('hidden');
+          registerForm.classList.add('hidden');
+        } else {
+          loginForm.classList.add('hidden');
+          registerForm.classList.remove('hidden');
+        }
+      });
+    });
+
+    // Toggle password visibility
+    document.getElementById('show-password-login').addEventListener('change', function () {
+      document.getElementById('password').type = this.checked ? 'text' : 'password';
+    });
+
+    document.getElementById('show-password-register').addEventListener('change', function () {
+      document.getElementById('register-password').type = this.checked ? 'text' : 'password';
+      document.getElementById('confirm-password').type = this.checked ? 'text' : 'password';
+    });
+
+    // Handle Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          alert('Login successful!');
+          window.location.href = 'dashboard.html';
+        } else {
+          alert(data.message || data.detail || data.error || 'Login failed');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('Could not connect to the API. Start the backend with: cd Server && npm start');
+      }
+    });
+
+    // Handle Register
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('name').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+
+      if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+      }
+
+      // Hardcode a default phone for demo since we didn't add it to HTML yet
+      const phoneNumber = '08012345678';
+
+      try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, email, password, phoneNumber })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Registration successful! Please sign in.');
+          // Switch to login
+          document.querySelector('[data-auth-target="login"]').click();
+          document.getElementById('email').value = email;
+        } else {
+          alert(data.message || data.detail || data.error || 'Registration failed');
+        }
+      } catch (err) {
+        console.error('Register error:', err);
+        alert('Could not connect to the API. Start the backend with: cd Server && npm start');
+      }
+    });
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>

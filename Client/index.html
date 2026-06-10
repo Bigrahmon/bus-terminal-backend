@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riderr | Bus Ticketing</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand">
+        <a href="index.html">
+          <div class="logo">🚌</div>
+          <div>
+            <h1>Riderr</h1>
+            <p>Smart bus ticket booking for every journey.</p>
+          </div>
+        </a>
+      </div>
+      <nav></nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">Travel with comfort</span>
+          <h2>Book your bus ticket in under 2 minutes.</h2>
+          <p>Find routes, compare prices, reserve seats, and manage your bookings from one modern interface.</p>
+          <a href="booking.html" class="primary-button">Book a Ride</a>
+        </div>
+        <div class="hero-visual">
+          <div class="media-wrap">
+            <video id="hero-video" class="hero-video" autoplay muted loop playsinline poster="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80">
+              <source src="https://cdn.coverr.co/videos/coverr-city-bus-on-the-road-1150/1080p.mp4" type="video/mp4" />
+              Your browser does not support HTML video.
+            </video>
+            <img class="hero-fallback" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" alt="Bus travel" />
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="features-section">
+        <h3>Why Riderr?</h3>
+        <div class="feature-grid">
+          <article>
+            <h4>Fast booking</h4>
+            <p>Search routes, select seats, and confirm tickets in a single flow.</p>
+          </article>
+          <article>
+            <h4>Live schedules</h4>
+            <p>See departure times, arrival estimates, and availability instantly.</p>
+          </article>
+          <article>
+            <h4>Secure login</h4>
+            <p>Sign in to view bookings, save passenger details, and get e-ticket access.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="about" class="about-section">
+        <div class="about-inner">
+          <div>
+            <span class="eyebrow">About Riderr</span>
+            <h3>Designed for easy travel planning</h3>
+            <p>Riderr is a modern bus ticketing experience that helps travelers discover routes, compare fares, and book seats with speed and confidence.</p>
+          </div>
+          <div class="about-cards">
+            <article>
+              <h4>Intuitive search</h4>
+              <p>Look up departure cities, arrival points, and schedules without friction.</p>
+            </article>
+            <article>
+              <h4>Secure accounts</h4>
+              <p>Create your profile once and reuse your passenger information securely across trips.</p>
+            </article>
+            <article>
+              <h4>Instant booking</h4>
+              <p>Reserve your seat and review your itinerary quickly with simple, responsive pages.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="tickets" class="ticket-panel">
+        <div class="panel-header">
+          <h3>Quick ticket search</h3>
+          <p>Choose your route from the destinations available on the Destinations page.</p>
+        </div>
+        <form id="search-form" class="search-form">
+          <div class="field-group">
+            <label for="from">From</label>
+            <select id="from">
+              <option value="Lagos">Lagos</option>
+              <option value="Ibadan">Ibadan</option>
+              <option value="Akure">Akure</option>
+              <option value="Abuja">Abuja</option>
+              <option value="Port Harcourt">Port Harcourt</option>
+              <option value="Ondo">Ondo</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="to">To</label>
+            <select id="to">
+              <option value="Ado Ekiti">Ado Ekiti</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="date">Date</label>
+            <input id="date" type="date" />
+            <script>
+              document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            </script>
+          </div>
+          <button type="submit" class="secondary-button">Search buses</button>
+        </form>
+        <div id="search-results" class="results-card hidden">
+          <h4>Available buses</h4>
+          <!-- Results will be injected here -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+
+    document.getElementById('search-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
+      const date = document.getElementById('date').value;
+      const resultsContainer = document.getElementById('search-results');
+      
+      resultsContainer.classList.remove('hidden');
+      resultsContainer.innerHTML = '<h4>Searching...</h4>';
+
+      try {
+        const response = await fetch(`${API_URL}/trips?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          renderResults(data.trips, from, to);
+        } else {
+          resultsContainer.innerHTML = '<h4>Error fetching results</h4>';
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        resultsContainer.innerHTML = '<h4>Mock offline mode: Server not responding</h4>';
+      }
+    });
+
+    function renderResults(trips, from, to) {
+      const resultsContainer = document.getElementById('search-results');
+      
+      if (!trips || trips.length === 0) {
+        resultsContainer.innerHTML = `<h4>No available buses found for ${from} &rarr; ${to} on selected date.</h4>`;
+        return;
+      }
+
+      let html = '<h4>Available buses</h4>';
+      
+      trips.forEach(trip => {
+        const time = new Date(trip.departure_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        html += `
+          <div class="result-item">
+            <div>
+              <strong>${trip.buses.name}</strong>
+              <span>${from} &rarr; ${to}</span>
+              <span style="font-size: 0.85rem; color: #88a5ff;">${trip.available_seats} seats available</span>
+            </div>
+            <div style="text-align: right;">
+              <span>${time}</span>
+              <span class="price">₦${trip.price.toLocaleString()}</span>
+            </div>
+            <a href="booking.html?tripId=${trip.id}" class="primary-button" style="padding: 10px 16px; min-width: auto;">Book</a>
+          </div>
+        `;
+      });
+      
+      resultsContainer.innerHTML = html;
+    }
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>

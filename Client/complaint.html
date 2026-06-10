@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riderr | Support</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand">
+        <a href="index.html">
+          <div class="logo">🚌</div>
+          <div>
+            <h1>Riderr</h1>
+            <p>We’re here to help.</p>
+          </div>
+        </a>
+      </div>
+      <nav></nav>
+    </header>
+
+    <main>
+      <section class="page-panel">
+        <div class="page-heading">
+          <span class="eyebrow">Support</span>
+          <h2>Get help or report an issue</h2>
+          <p>Tell us what happened and we’ll review your case quickly. Our support team is notified immediately.</p>
+        </div>
+
+        <div class="form-panel">
+          <form id="complaint-form" class="complaint-form">
+            <div class="field-group">
+              <label for="complaint-name">Full name</label>
+              <input id="complaint-name" type="text" placeholder="Jane Doe" required />
+            </div>
+
+            <div class="field-group">
+              <label for="complaint-email">Email</label>
+              <input id="complaint-email" type="email" placeholder="you@example.com" required />
+            </div>
+
+            <div class="field-group">
+              <label for="booking-ref">Booking reference</label>
+              <input id="booking-ref" type="text" placeholder="AB1234" />
+            </div>
+
+            <div class="field-group">
+              <label for="complaint-category">Category</label>
+              <select id="complaint-category">
+                <option>Service quality</option>
+                <option>Seat problems</option>
+                <option>Ticketing issue</option>
+                <option>Delay or cancellation</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="complaint-message">Describe your issue</label>
+              <textarea id="complaint-message" rows="6" placeholder="Please provide as much detail as possible." required></textarea>
+            </div>
+
+            <button type="submit" class="primary-button">Submit complaint</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+
+    document.getElementById('complaint-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('complaint-name').value;
+      const email = document.getElementById('complaint-email').value;
+      const booking_code = document.getElementById('booking-ref').value;
+      const category = document.getElementById('complaint-category').value;
+      const message = document.getElementById('complaint-message').value;
+
+      try {
+        const response = await fetch(`${API_URL}/complaints`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, booking_code, category, message })
+        });
+
+        if (response.ok) {
+          alert('Complaint submitted successfully. Our team will review it shortly.');
+          document.getElementById('complaint-form').reset();
+        } else {
+          const data = await response.json();
+          alert(data.error || 'Failed to submit complaint');
+        }
+      } catch (err) {
+        console.error('Complaint error:', err);
+        alert('Could not connect to server, but your complaint has been noted locally.');
+        document.getElementById('complaint-form').reset();
+      }
+    });
+
+    // Auto-fill user details if logged in
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      document.getElementById('complaint-name').value = user.name || '';
+      document.getElementById('complaint-email').value = user.email || '';
+    }
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riderr | Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand">
+        <a href="index.html">
+          <div class="logo">🚌</div>
+          <div>
+            <h1>Riderr Dashboard</h1>
+            <p>Your account, points, and bus status all in one place.</p>
+          </div>
+        </a>
+      </div>
+      <nav></nav>
+    </header>
+
+    <main>
+      <section class="page-panel dashboard-panel">
+        <div class="dashboard-top">
+          <div class="wallet-card">
+            <div class="wallet-icon">💼</div>
+            <div>
+              <p class="eyebrow">Point balance</p>
+              <h2>3,250 pts</h2>
+              <p class="small-note">Your Riderr wallet can be used for discounts and upgrades.</p>
+            </div>
+          </div>
+
+          <div class="price-card">
+            <p class="eyebrow">Destination pricing</p>
+            <table class="price-table">
+              <thead>
+                <tr><th>Route</th><th>Price</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Lagos → Ado Ekiti</td><td>₦8,500</td></tr>
+                <tr><td>Ibadan → Ado Ekiti</td><td>₦6,800</td></tr>
+                <tr><td>Abuja → Ado Ekiti</td><td>₦12,200</td></tr>
+                <tr><td>Port Harcourt → Ado Ekiti</td><td>₦14,000</td></tr>
+                <tr><td>Ondo → Ado Ekiti</td><td>₦5,900</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bus-lists">
+          <article class="bus-status-group">
+            <div class="group-header">
+              <span class="eyebrow">Available buses</span>
+              <p>Ready for booking and departure.</p>
+            </div>
+            <div class="bus-card green">
+              <h3>Riderr Express</h3>
+              <p>Route: Lagos → Ado Ekiti</p>
+              <p>Location: Lagos bus park</p>
+              <span class="status-pill status-available">Available</span>
+            </div>
+            <div class="bus-card green">
+              <h3>Ekiti Comfort</h3>
+              <p>Route: Ibadan → Ado Ekiti</p>
+              <p>Location: Ibadan interchange</p>
+              <span class="status-pill status-available">Available</span>
+            </div>
+            <div class="bus-card green">
+              <h3>Capital Link</h3>
+              <p>Route: Abuja → Ado Ekiti</p>
+              <p>Location: Abuja park</p>
+              <span class="status-pill status-available">Available</span>
+            </div>
+          </article>
+
+          <article class="bus-status-group">
+            <div class="group-header">
+              <span class="eyebrow">Unavailable buses</span>
+              <p>Currently offline, delayed, or in service.</p>
+            </div>
+            <div class="bus-card red">
+              <h3>South Coast Voyager</h3>
+              <p>Route: Port Harcourt → Ado Ekiti</p>
+              <p>Location: En route, nearing Warri</p>
+              <span class="status-pill status-unavailable">Unavailable</span>
+            </div>
+            <div class="bus-card red">
+              <h3>Ondo Shuttle</h3>
+              <p>Route: Ondo → Ado Ekiti</p>
+              <p>Location: Under maintenance at Ondo depot</p>
+              <span class="status-pill status-unavailable">Unavailable</span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Check if user is logged in
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        // Redirect to login if not logged in
+        alert('Please login to view your dashboard');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const user = JSON.parse(userStr);
+      
+      // Update header
+      document.querySelector('.brand h1').textContent = `Welcome, ${user.name.split(' ')[0]}`;
+
+      // 2. Fetch routes and prices
+      try {
+        const response = await fetch(`${API_URL}/routes`);
+        if (response.ok) {
+          const data = await response.json();
+          renderPrices(data.routes);
+        }
+      } catch (err) {
+        console.error('Error fetching routes:', err);
+      }
+
+      // (Note: To fetch user bookings, we would need a GET /api/user/:id/bookings endpoint 
+      // which we didn't explicitly plan for, so we will show the static mock data for buses for now)
+    });
+
+    function renderPrices(routes) {
+      const tbody = document.querySelector('.price-table tbody');
+      if (!routes || routes.length === 0) return;
+
+      // Clear existing hardcoded rows
+      tbody.innerHTML = '';
+      
+      // We don't store prices on routes table (it's on trips), but we can display a mock or static for demo, 
+      // or we just leave the table as is. For the demo, let's keep the UI dynamic but use a mock price for the routes.
+      routes.forEach(route => {
+        // Dummy price generator based on duration for demo
+        const price = (route.duration_mins * 25).toLocaleString();
+        tbody.innerHTML += `
+          <tr><td>${route.from_city} &rarr; ${route.to_city}</td><td>₦${price}</td></tr>
+        `;
+      });
+    }
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>

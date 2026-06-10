@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riderr | Book a Ride</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand">
+        <a href="index.html">
+          <div class="logo">🚌</div>
+          <div>
+            <h1>Riderr</h1>
+            <p>Book your ride with traveler details.</p>
+          </div>
+        </a>
+      </div>
+      <nav></nav>
+    </header>
+
+    <main>
+      <section class="page-panel">
+        <div class="page-heading">
+          <span class="eyebrow">Ride booking</span>
+          <h2>Fill in passenger details before your trip</h2>
+          <p>Provide contact, next-of-kin, and identification information so we can process your booking safely.</p>
+        </div>
+
+        <div class="seat-map-container">
+          <div class="seat-map-header">
+            <h3>Select your seat</h3>
+            <div class="seat-legend">
+              <div class="legend-item"><div class="legend-box legend-available"></div> Available</div>
+              <div class="legend-item"><div class="legend-box legend-held"></div> Selected</div>
+              <div class="legend-item"><div class="legend-box legend-booked"></div> Booked</div>
+            </div>
+          </div>
+          <div class="bus-layout">
+            <div class="driver-seat">🚙</div>
+            <!-- Seats will be injected by JS -->
+            <div id="seat-grid"></div>
+          </div>
+          <div class="selected-seat-info hidden" id="selected-seat-info">
+            <div>
+              <h4>Seat <span id="display-seat-number">--</span></h4>
+              <p>Reserved for <span class="timer" id="hold-timer">10:00</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-panel">
+          <form id="booking-form" class="booking-form">
+            <div class="booking-grid">
+              <div class="field-group">
+                <label for="booking-name">Full name</label>
+                <input id="booking-name" type="text" placeholder="Jane Doe" required />
+              </div>
+              <div class="field-group">
+                <label for="booking-email">Email</label>
+                <input id="booking-email" type="email" placeholder="you@example.com" required />
+              </div>
+            </div>
+
+            <div class="booking-grid">
+              <div class="field-group">
+                <label for="booking-phone">Phone number</label>
+                <input id="booking-phone" type="tel" placeholder="+234 812 345 6789" required />
+              </div>
+              <div class="field-group">
+                <label for="booking-date">Travel date</label>
+                <input id="booking-date" type="date" required />
+              </div>
+            </div>
+
+            <div class="booking-grid">
+              <div class="field-group">
+                <label for="booking-from">Departure</label>
+                <input id="booking-from" type="text" placeholder="Lagos" required />
+              </div>
+              <div class="field-group">
+                <label for="booking-to">Destination</label>
+                <input id="booking-to" type="text" placeholder="Ado Ekiti" required />
+              </div>
+            </div>
+
+            <div class="booking-grid">
+              <div class="field-group">
+                <label for="kin-name">Next of kin</label>
+                <input id="kin-name" type="text" placeholder="John Doe" required />
+              </div>
+              <div class="field-group">
+                <label for="kin-relationship">Relationship</label>
+                <input id="kin-relationship" type="text" placeholder="Sibling" required />
+              </div>
+            </div>
+
+            <div class="booking-grid">
+              <div class="field-group">
+                <label for="kin-phone">Kin phone</label>
+                <input id="kin-phone" type="tel" placeholder="+234 701 234 5678" required />
+              </div>
+              <div class="field-group">
+                <label for="id-type">Means of identification</label>
+                <select id="id-type" required>
+                  <option value="">Select ID type</option>
+                  <option>NIN</option>
+                  <option>Voters card</option>
+                  <option>Driver license</option>
+                  <option>International passport</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="id-number">ID number</label>
+              <input id="id-number" type="text" placeholder="1234 5678 9012" required />
+            </div>
+
+            <div class="field-group">
+              <label for="booking-notes">Additional notes</label>
+              <textarea id="booking-notes" placeholder="Tell us any special requirements."></textarea>
+            </div>
+
+            <button type="submit" class="primary-button">Submit booking details</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    let selectedSeat = null;
+    let holdTimerInterval = null;
+
+    // --- Require Login ---
+    const userStr = localStorage.getItem('user');
+    const currentUser = userStr ? JSON.parse(userStr) : null;
+    if (!currentUser || !currentUser.id) {
+      alert('Please sign in to book a ride.');
+      window.location.href = 'login.html';
+    }
+
+    // Get tripId from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tripId = urlParams.get('tripId');
+    if (!tripId) {
+      alert('No trip selected. Please search for a route and select a bus first.');
+      window.location.href = 'index.html';
+    }
+
+    async function fetchSeats() {
+      if (!tripId) return;
+      const seatGrid = document.getElementById('seat-grid');
+      seatGrid.innerHTML = 'Loading seats...';
+      try {
+        const response = await fetch(`${API_URL}/trips/${tripId}/seats`);
+        if (response.ok) {
+          const data = await response.json();
+          renderSeatGrid(data.seats);
+        } else {
+          const errorData = await response.json();
+          seatGrid.innerHTML = `<p style="grid-column: 1 / -1; color: red;">Error: ${errorData.message || 'Could not load seats'}</p>`;
+        }
+      } catch (err) {
+        console.error('Error fetching seats', err);
+        seatGrid.innerHTML = '<p style="grid-column: 1 / -1; color: red;">Failed to connect to server to load seats.</p>';
+      }
+    }
+
+    function renderSeatGrid(seatsFromApi) {
+      const seatGrid = document.getElementById('seat-grid');
+      seatGrid.innerHTML = '';
+      
+      const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+      
+      rows.forEach(row => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'seat-row';
+        rowDiv.style.marginBottom = '16px';
+
+        // Left Pair
+        const leftPair = document.createElement('div');
+        leftPair.className = 'seat-pair';
+        
+        // Right Pair
+        const rightPair = document.createElement('div');
+        rightPair.className = 'seat-pair';
+
+        [1, 2].forEach(num => {
+          const seatLabel = `${row}${num}`;
+          const seatData = seatsFromApi.find(s => s.seat_number === seatLabel);
+          const status = seatData ? seatData.status : 'available';
+
+          const seatDiv = document.createElement('div');
+          seatDiv.className = `seat ${status}`;
+          seatDiv.textContent = seatLabel;
+          
+          if (status === 'available') {
+            seatDiv.onclick = () => selectSeat(seatLabel, seatData?.id);
+          }
+
+          if (num === 1) leftPair.appendChild(seatDiv);
+          else rightPair.appendChild(seatDiv);
+        });
+
+        rowDiv.appendChild(leftPair);
+        rowDiv.appendChild(rightPair);
+        seatGrid.appendChild(rowDiv);
+      });
+    }
+
+    async function selectSeat(seatLabel, seatId) {
+      if (selectedSeat) {
+        alert('You already have a seat selected.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/seats/hold`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trip_id: tripId, seat_number: seatLabel, user_id: currentUser.id })
+        });
+
+        if (response.ok) {
+          selectedSeat = seatLabel;
+          document.getElementById('selected-seat-info').classList.remove('hidden');
+          document.getElementById('display-seat-number').textContent = seatLabel;
+          startTimer();
+          fetchSeats(); // Refresh grid
+        } else {
+          const err = await response.json();
+          alert(err.message || 'Failed to hold seat');
+        }
+      } catch (err) {
+        console.error('Hold error', err);
+        alert('Could not connect to server. Please make sure the backend is running.');
+      }
+    }
+
+    function startTimer() {
+      let seconds = 600;
+      const timerDisplay = document.getElementById('hold-timer');
+      
+      clearInterval(holdTimerInterval);
+      holdTimerInterval = setInterval(() => {
+        seconds--;
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        
+        if (seconds <= 0) {
+          clearInterval(holdTimerInterval);
+          alert('Seat hold expired');
+          selectedSeat = null;
+          document.getElementById('selected-seat-info').classList.add('hidden');
+          fetchSeats();
+        }
+      }, 1000);
+    }
+
+    document.getElementById('booking-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedSeat) {
+        alert('Please select a seat first');
+        return;
+      }
+
+      const bookingData = {
+        user_id: currentUser.id,
+        trip_id: tripId,
+        seat_number: selectedSeat,
+        passenger_name: document.getElementById('booking-name').value,
+        passenger_email: document.getElementById('booking-email').value,
+        passenger_phone: document.getElementById('booking-phone').value,
+        kin_name: document.getElementById('kin-name').value,
+        kin_relationship: document.getElementById('kin-relationship').value,
+        kin_phone: document.getElementById('kin-phone').value,
+        id_type: document.getElementById('id-type').value,
+        id_number: document.getElementById('id-number').value,
+        notes: document.getElementById('booking-notes').value
+      };
+
+      try {
+        const response = await fetch(`${API_URL}/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bookingData)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          alert(`Booking Confirmed! Your booking code: ${data.booking.booking_code}`);
+          window.location.href = 'tickets.html';
+        } else {
+          const err = await response.json();
+          alert(err.message || 'Booking failed');
+        }
+      } catch (err) {
+        console.error('Booking error', err);
+        alert('Could not connect to server. Please make sure the backend is running.');
+      }
+    });
+
+    fetchSeats();
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>

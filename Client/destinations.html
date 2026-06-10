@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riderr | Routes</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand">
+        <a href="index.html">
+          <div class="logo">🚌</div>
+          <div>
+            <h1>Riderr</h1>
+            <p>Discover your next route.</p>
+          </div>
+        </a>
+      </div>
+      <nav></nav>
+    </header>
+
+    <main>
+      <section class="page-panel">
+        <div class="page-heading">
+          <span class="eyebrow">Destinations</span>
+          <h2>Available routes across our network</h2>
+          <p>Browse current destinations, popular corridors, and nonstop routes designed for safe, easy travel.</p>
+        </div>
+
+        <div class="destination-grid">
+          <article class="destination-card">
+            <h3>Lagos → Ado Ekiti</h3>
+            <p>Popular daytime route from the commercial capital to Ekiti State’s capital.</p>
+            <span>7h 45m</span>
+            <a href="#tickets" class="primary-button" style="margin-top: 1rem; display: block; text-align: center;" onclick="document.getElementById('from').value='Lagos';">Book Route</a>
+          </article>
+          <article class="destination-card">
+            <h3>Ibadan → Ado Ekiti</h3>
+            <p>Comfortable service through Oyo and Ekiti states for fast regional travel.</p>
+            <span>4h 20m</span>
+            <a href="#tickets" class="primary-button" style="margin-top: 1rem; display: block; text-align: center;" onclick="document.getElementById('from').value='Ibadan';">Book Route</a>
+          </article>
+          <article class="destination-card">
+            <h3>Akure → Ado Ekiti</h3>
+            <p>Short southeast corridor linking Ondo State to Ekiti State.</p>
+            <span>3h 10m</span>
+            <a href="#tickets" class="primary-button" style="margin-top: 1rem; display: block; text-align: center;" onclick="document.getElementById('from').value='Akure';">Book Route</a>
+          </article>
+          <article class="destination-card">
+            <h3>Abuja → Ado Ekiti</h3>
+            <p>Cross-country route connecting the federal capital with Ekiti State.</p>
+            <span>11h 30m</span>
+            <a href="#tickets" class="primary-button" style="margin-top: 1rem; display: block; text-align: center;" onclick="document.getElementById('from').value='Abuja';">Book Route</a>
+          </article>
+          <article class="destination-card">
+            <h3>Port Harcourt → Ado Ekiti</h3>
+            <p>South-south service into the southwest, ideal for business and leisure travelers.</p>
+            <span>9h 50m</span>
+            <a href="#tickets" class="primary-button" style="margin-top: 1rem; display: block; text-align: center;" onclick="document.getElementById('from').value='Port Harcourt';">Book Route</a>
+          </article>
+          <article class="destination-card">
+            <h3>Ondo → Ado Ekiti</h3>
+            <p>Convenient connection from key towns in Ondo State to Ekiti State.</p>
+            <span>2h 40m</span>
+            <a href="#tickets" class="primary-button" style="margin-top: 1rem; display: block; text-align: center;" onclick="document.getElementById('from').value='Ondo';">Book Route</a>
+          </article>
+        </div>
+
+        <section id="tickets" class="ticket-panel" style="margin-top: 3rem;">
+          <div class="panel-header">
+            <h3>Quick ticket search</h3>
+            <p>Choose your route from the destinations available.</p>
+          </div>
+          <form id="search-form" class="search-form">
+            <div class="field-group">
+              <label for="from">From</label>
+              <select id="from">
+                <option value="Lagos">Lagos</option>
+                <option value="Ibadan">Ibadan</option>
+                <option value="Akure">Akure</option>
+                <option value="Abuja">Abuja</option>
+                <option value="Port Harcourt">Port Harcourt</option>
+                <option value="Ondo">Ondo</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="to">To</label>
+              <select id="to">
+                <option value="Ado Ekiti">Ado Ekiti</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="date">Date</label>
+              <input id="date" type="date" />
+              <script>
+                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+              </script>
+            </div>
+            <button type="submit" class="secondary-button">Search buses</button>
+          </form>
+          <div id="search-results" class="results-card hidden">
+            <h4>Available buses</h4>
+            <!-- Results will be injected here -->
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+
+    document.getElementById('search-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
+      const date = document.getElementById('date').value;
+      const resultsContainer = document.getElementById('search-results');
+      
+      resultsContainer.classList.remove('hidden');
+      resultsContainer.innerHTML = '<h4>Searching...</h4>';
+
+      try {
+        const response = await fetch(`${API_URL}/trips?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          renderResults(data.trips, from, to);
+        } else {
+          resultsContainer.innerHTML = '<h4>Error fetching results</h4>';
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        resultsContainer.innerHTML = '<h4>Mock offline mode: Server not responding</h4>';
+      }
+    });
+
+    function renderResults(trips, from, to) {
+      const resultsContainer = document.getElementById('search-results');
+      
+      if (!trips || trips.length === 0) {
+        resultsContainer.innerHTML = `<h4>No available buses found for ${from} &rarr; ${to} on selected date.</h4>`;
+        return;
+      }
+
+      let html = '<h4>Available buses</h4>';
+      
+      trips.forEach(trip => {
+        const time = new Date(trip.departure_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        html += `
+          <div class="result-item">
+            <div>
+              <strong>${trip.buses?.name || 'Bus'}</strong>
+              <span>${from} &rarr; ${to}</span>
+              <span style="font-size: 0.85rem; color: #88a5ff;">${trip.available_seats} seats available</span>
+            </div>
+            <div style="text-align: right;">
+              <span>${time}</span>
+              <span class="price">₦${trip.price.toLocaleString()}</span>
+            </div>
+            <a href="booking.html?tripId=${trip.id}" class="primary-button" style="padding: 10px 16px; min-width: auto;">Book</a>
+          </div>
+        `;
+      });
+      
+      resultsContainer.innerHTML = html;
+    }
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>
