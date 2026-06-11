@@ -302,7 +302,7 @@
         }
       } catch (err) {
         console.error('Booking error', err);
-        alert('Could not connect to server. Please make sure the backend is running.');
+        alert('Error: ' + err.message);
       }
     });
 
