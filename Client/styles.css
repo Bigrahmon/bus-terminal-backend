@@ -7,10 +7,17 @@
 
 * {
   box-sizing: border-box;
+  word-break: break-word;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
-  margin: 0;
   min-height: 100vh;
   background: radial-gradient(circle at top, #1e2a4f 0%, #0b101f 45%, #06080f 100%);
 }
