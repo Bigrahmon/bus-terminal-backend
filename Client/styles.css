@@ -1211,3 +1211,15 @@ nav {
   color: #ffb86b;
   font-variant-numeric: tabular-nums;
 }
+
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .hero-copy h2 { font-size: 2rem; }
+  .feature-grid, .about-cards { grid-template-columns: 1fr; }
+  .booking-grid { grid-template-columns: 1fr; }
+  .search-form { flex-direction: column; }
+  .seat-row { flex-direction: row; justify-content: center; gap: 20px; }
+  .bus-layout { padding: 10px; }
+}
+
