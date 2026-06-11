@@ -1214,12 +1214,29 @@ nav {
 
 
 /* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .hero-copy h2 { font-size: 2rem; }
-  .feature-grid, .about-cards { grid-template-columns: 1fr; }
-  .booking-grid { grid-template-columns: 1fr; }
-  .search-form { flex-direction: column; }
-  .seat-row { flex-direction: row; justify-content: center; gap: 20px; }
+@media (max-width: 900px) {
+  /* Layout Grids */
+  .hero, .about-section .about-inner { grid-template-columns: 1fr; text-align: center; }
+  .hero-copy { margin: 0 auto; max-width: 100%; }
+  .feature-grid, .about-cards, .destination-grid, .booking-grid { grid-template-columns: 1fr; }
+  .search-form { grid-template-columns: 1fr; }
+  .dashboard-top, .bus-lists { grid-template-columns: 1fr; }
+  
+  /* Typography */
+  .hero-copy h2 { font-size: 2.2rem; }
+  .page-heading h2 { font-size: 2rem; }
+  
+  /* Navigation */
+  .site-header { flex-wrap: wrap; }
+  .nav-hamburger { display: flex; order: 2; margin-left: auto; }
+  .nav-links, .nav-auth { display: none; width: 100%; flex-direction: column; padding: 10px 0; }
+  nav.nav-open { position: absolute; top: 100%; left: 0; right: 0; background: #0c1220; z-index: 50; padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); flex-direction: column; align-items: flex-start; }
+  nav.nav-open .nav-links, nav.nav-open .nav-auth { display: flex; align-items: flex-start; margin-left: 0; }
+  nav.nav-open .nav-links a, nav.nav-open .nav-auth a, nav.nav-open .nav-auth button { width: 100%; text-align: left; }
+  .nav-cta { text-align: center !important; margin-top: 10px; }
+  
+  /* Seats */
+  .seat-row { flex-wrap: wrap; justify-content: center; gap: 10px; }
   .bus-layout { padding: 10px; }
 }
 
