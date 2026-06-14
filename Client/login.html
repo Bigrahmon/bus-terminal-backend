@@ -49,7 +49,8 @@
             </label>
           </div>
 
-          <button type="submit" class="primary-button">Sign in</button>
+          <button type="submit" class="primary-button" id="login-btn">Sign in</button>
+          <p id="login-status" style="font-size:0.82rem;color:#88a5ff;margin-top:0.5rem;min-height:1.2em;"></p>
 
         </form>
 
@@ -72,7 +73,8 @@
             </label>
           </div>
 
-          <button type="submit" class="primary-button">Create account</button>
+          <button type="submit" class="primary-button" id="register-btn">Create account</button>
+          <p id="register-status" style="font-size:0.82rem;color:#88a5ff;margin-top:0.5rem;min-height:1.2em;"></p>
           <p class="note">After registration, you can sign in and continue booking.</p>
         </form>
       </div>
@@ -117,6 +119,12 @@
       e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+      const btn = document.getElementById('login-btn');
+      const status = document.getElementById('login-status');
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      status.textContent = '⏳ Connecting to server, please wait...';
 
       try {
         const response = await fetch(`${API_URL}/auth/login`, {
@@ -128,15 +136,21 @@
         const data = await response.json();
 
         if (response.ok) {
+          status.textContent = '✅ Login successful! Redirecting...';
           localStorage.setItem('user', JSON.stringify(data.user));
-          alert('Login successful!');
           window.location.href = 'dashboard.html';
         } else {
+          status.textContent = '';
           alert(data.message || data.detail || data.error || 'Login failed');
+          btn.disabled = false;
+          btn.textContent = 'Sign in';
         }
       } catch (err) {
         console.error('Login error:', err);
+        status.textContent = '';
         alert('Could not connect to the API. Start the backend with: cd Server && npm start');
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
       }
     });
 
@@ -147,6 +161,8 @@
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
       const confirmPassword = document.getElementById('confirm-password').value;
+      const btn = document.getElementById('register-btn');
+      const status = document.getElementById('register-status');
 
       if (password !== confirmPassword) {
         alert('Passwords do not match!');
@@ -155,6 +171,10 @@
 
       // Hardcode a default phone for demo since we didn't add it to HTML yet
       const phoneNumber = '08012345678';
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+      status.textContent = '⏳ Connecting to server, please wait...';
 
       try {
         const response = await fetch(`${API_URL}/auth/register`, {
@@ -166,16 +186,27 @@
         const data = await response.json();
 
         if (response.ok) {
-          alert('Registration successful! Please sign in.');
-          // Switch to login
-          document.querySelector('[data-auth-target="login"]').click();
-          document.getElementById('email').value = email;
+          status.textContent = '✅ Account created! Switching to sign in...';
+          setTimeout(() => {
+            status.textContent = '';
+            btn.disabled = false;
+            btn.textContent = 'Create account';
+            // Switch to login
+            document.querySelector('[data-auth-target="login"]').click();
+            document.getElementById('email').value = email;
+          }, 1200);
         } else {
+          status.textContent = '';
           alert(data.message || data.detail || data.error || 'Registration failed');
+          btn.disabled = false;
+          btn.textContent = 'Create account';
         }
       } catch (err) {
         console.error('Register error:', err);
+        status.textContent = '';
         alert('Could not connect to the API. Start the backend with: cd Server && npm start');
+        btn.disabled = false;
+        btn.textContent = 'Create account';
       }
     });
   </script>

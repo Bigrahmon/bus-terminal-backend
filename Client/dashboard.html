@@ -40,11 +40,12 @@
                 <tr><th>Route</th><th>Price</th></tr>
               </thead>
               <tbody>
-                <tr><td>Lagos → Ado Ekiti</td><td>₦8,500</td></tr>
-                <tr><td>Ibadan → Ado Ekiti</td><td>₦6,800</td></tr>
-                <tr><td>Abuja → Ado Ekiti</td><td>₦12,200</td></tr>
-                <tr><td>Port Harcourt → Ado Ekiti</td><td>₦14,000</td></tr>
-                <tr><td>Ondo → Ado Ekiti</td><td>₦5,900</td></tr>
+                <tr><td>Lagos → Ado Ekiti</td><td>₦15,000</td></tr>
+                <tr><td>Ibadan → Ado Ekiti</td><td>₦15,000</td></tr>
+                <tr><td>Akure → Ado Ekiti</td><td>₦15,000</td></tr>
+                <tr><td>Abuja → Ado Ekiti</td><td>₦15,000</td></tr>
+                <tr><td>Port Harcourt → Ado Ekiti</td><td>₦15,000</td></tr>
+                <tr><td>Ondo → Ado Ekiti</td><td>₦15,000</td></tr>
               </tbody>
             </table>
           </div>
@@ -138,13 +139,10 @@
       // Clear existing hardcoded rows
       tbody.innerHTML = '';
       
-      // We don't store prices on routes table (it's on trips), but we can display a mock or static for demo, 
-      // or we just leave the table as is. For the demo, let's keep the UI dynamic but use a mock price for the routes.
+      // All trips are priced at ₦15,000 — show consistent pricing.
       routes.forEach(route => {
-        // Dummy price generator based on duration for demo
-        const price = (route.duration_mins * 25).toLocaleString();
         tbody.innerHTML += `
-          <tr><td>${route.from_city} &rarr; ${route.to_city}</td><td>₦${price}</td></tr>
+          <tr><td>${route.from_city} &rarr; ${route.to_city}</td><td>₦15,000</td></tr>
         `;
       });
     }
