@@ -65,10 +65,10 @@ export const register = async (req, res) => {
     res.status(201).json({ message: 'User registered successfully', user: formatUser(newUser) });
   } catch (error) {
     console.error('Registration error:', error);
-    const detail = error?.message || error?.details;
+    const detail = error?.message || error?.details || String(error);
     res.status(500).json({
       message: 'Server error during registration',
-      ...(process.env.NODE_ENV !== 'production' && detail ? { detail } : {}),
+      detail
     });
   }
 };
@@ -108,10 +108,10 @@ export const login = async (req, res) => {
     res.status(200).json({ message: 'Login successful', user: formatUser(user) });
   } catch (error) {
     console.error('Login error:', error);
-    const detail = error?.message || error?.details;
+    const detail = error?.message || error?.details || String(error);
     res.status(500).json({
       message: 'Server error during login',
-      ...(process.env.NODE_ENV !== 'production' && detail ? { detail } : {}),
+      detail
     });
   }
 };

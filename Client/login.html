@@ -141,7 +141,7 @@
           window.location.href = 'dashboard.html';
         } else {
           status.textContent = '';
-          alert(data.message || data.detail || data.error || 'Login failed');
+          alert((data.message || 'Login failed') + (data.detail ? '\\nDetail: ' + data.detail : ''));
           btn.disabled = false;
           btn.textContent = 'Sign in';
         }
@@ -197,7 +197,7 @@
           }, 1200);
         } else {
           status.textContent = '';
-          alert(data.message || data.detail || data.error || 'Registration failed');
+          alert((data.message || 'Registration failed') + (data.detail ? '\\nDetail: ' + data.detail : ''));
           btn.disabled = false;
           btn.textContent = 'Create account';
         }
