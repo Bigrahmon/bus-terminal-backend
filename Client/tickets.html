@@ -105,6 +105,7 @@
   </div>
 
   <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const userStr = localStorage.getItem('user');
@@ -158,36 +159,62 @@
         
         const origin = route ? route.from_city : 'Unknown';
         const destination = route ? route.to_city : 'Unknown';
+        const destAddress = route ? route.destination_address : 'Main Terminal';
         const busName = bus ? bus.name : 'Unknown';
         const plate = bus ? bus.plate_number : '';
+        const trackingCode = trip ? trip.tracking_code : 'N/A';
+        const totalPrice = booking.total_price ? `₦${booking.total_price.toLocaleString()}` : 'N/A';
+        
+        // Data to encode in QR
+        const qrData = JSON.stringify({
+          booking: booking.booking_code,
+          tracking: trackingCode,
+          seat: seat
+        });
 
         html += `
           <div class="ticket-card">
             <div class="ticket-header">
-              <h3>${origin} &rarr; ${destination}</h3>
-              <span class="ticket-code">${booking.booking_code}</span>
+              <div>
+                <h3>${origin} &rarr; ${destination}</h3>
+                <small style="color: var(--text-muted);">${destAddress}</small>
+              </div>
+              <div style="text-align: right;">
+                <span class="ticket-code">${booking.booking_code}</span>
+                <div style="margin-top: 4px; font-size: 0.85rem;">Track: ${trackingCode}</div>
+              </div>
             </div>
             
-            <div class="ticket-body">
-              <div class="ticket-detail">
-                <span class="detail-label">Passenger</span>
-                <span class="detail-value">${booking.passenger_name}</span>
+            <div style="display: flex; gap: 20px; align-items: center;">
+              <div class="ticket-body" style="flex: 1;">
+                <div class="ticket-detail">
+                  <span class="detail-label">Passenger</span>
+                  <span class="detail-value">${booking.passenger_name}</span>
+                </div>
+                <div class="ticket-detail">
+                  <span class="detail-label">Date & Time</span>
+                  <span class="detail-value">${dateStr} at ${timeStr}</span>
+                </div>
+                <div class="ticket-detail">
+                  <span class="detail-label">Seat</span>
+                  <span class="detail-value" style="color: var(--primary-light); font-weight: bold;">${seat}</span>
+                </div>
+                <div class="ticket-detail">
+                  <span class="detail-label">Bus Details</span>
+                  <span class="detail-value">${busName} <small>(${plate})</small></span>
+                </div>
+                <div class="ticket-detail">
+                  <span class="detail-label">Total Price</span>
+                  <span class="detail-value" style="color: var(--primary-light);">${totalPrice}</span>
+                </div>
+                <div class="ticket-detail">
+                  <span class="detail-label">Status</span>
+                  <span class="detail-value" style="text-transform: capitalize; color: #4ade80;">${booking.status || 'Confirmed'}</span>
+                </div>
               </div>
-              <div class="ticket-detail">
-                <span class="detail-label">Date & Time</span>
-                <span class="detail-value">${dateStr} at ${timeStr}</span>
-              </div>
-              <div class="ticket-detail">
-                <span class="detail-label">Seat</span>
-                <span class="detail-value" style="color: var(--primary-light); font-weight: bold;">${seat}</span>
-              </div>
-              <div class="ticket-detail">
-                <span class="detail-label">Bus Details</span>
-                <span class="detail-value">${busName} <small>(${plate})</small></span>
-              </div>
-              <div class="ticket-detail">
-                <span class="detail-label">Status</span>
-                <span class="detail-value" style="text-transform: capitalize; color: #4ade80;">${booking.status || 'Confirmed'}</span>
+              
+              <div class="ticket-qr">
+                <canvas id="qr-${booking.booking_code}" width="120" height="120" style="border-radius: 8px; background: white; padding: 4px;"></canvas>
               </div>
             </div>
             
@@ -199,6 +226,23 @@
       });
       
       container.innerHTML = html;
+      
+      // Generate QR codes after adding to DOM
+      bookings.forEach(booking => {
+        const trip = booking.trips;
+        const trackingCode = trip ? trip.tracking_code : 'N/A';
+        const qrData = JSON.stringify({
+          booking: booking.booking_code,
+          tracking: trackingCode
+        });
+        
+        const canvas = document.getElementById(`qr-${booking.booking_code}`);
+        if (canvas) {
+          QRCode.toCanvas(canvas, qrData, { width: 120, margin: 1, color: { dark: '#000000', light: '#ffffff' } }, function (error) {
+            if (error) console.error(error);
+          });
+        }
+      });
     }
   </script>
   <script src="nav.js"></script>

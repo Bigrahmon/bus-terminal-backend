@@ -93,6 +93,8 @@ export const createBooking = async (req, res) => {
         id, status, held_by,
         trips (
           departure_time,
+          price,
+          security_fee,
           buses ( name )
         )
       `)
@@ -124,6 +126,11 @@ export const createBooking = async (req, res) => {
 
     if (seatUpdateError) throw seatUpdateError;
 
+    // Calculate total price
+    const basePrice = parseFloat(seat.trips?.price || 0);
+    const securityFee = parseFloat(seat.trips?.security_fee || 500);
+    const total_price = basePrice + securityFee;
+
     // Create booking record
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
@@ -140,7 +147,8 @@ export const createBooking = async (req, res) => {
         kin_phone: kin_phone || '',
         id_type: id_type || '',
         id_number: id_number || '',
-        notes: notes || ''
+        notes: notes || '',
+        total_price: total_price
       }])
       .select()
       .single();
@@ -198,12 +206,16 @@ export const getUserBookings = async (req, res) => {
       .from('bookings')
       .select(`
         *,
+        total_price,
         trips (
           departure_time,
           price,
+          security_fee,
+          tracking_code,
           routes (
             from_city,
-            to_city
+            to_city,
+            destination_address
           ),
           buses (
             name,

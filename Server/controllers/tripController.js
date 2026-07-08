@@ -77,11 +77,14 @@ export const searchTrips = async (req, res) => {
       const newTrips = missingBuses.map((bus, index) => {
         const hour = 8 + (index * 2); // Stagger departure times: 8am, 10am, 12pm, etc.
         const timeStr = `${date}T${hour.toString().padStart(2, '0')}:00:00.000Z`;
+        const trackingCode = 'TRK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
         return {
           route_id: routeId,
           bus_id: bus.id,
           departure_time: timeStr,
-          price: 15000.00
+          price: 15000.00,
+          security_fee: 500.00,
+          tracking_code: trackingCode
         };
       });
       
@@ -166,5 +169,116 @@ export const getTripSeats = async (req, res) => {
   } catch (error) {
     console.error('getTripSeats error:', error);
     res.status(500).json({ message: 'Server error fetching seats' });
+  }
+};
+
+export const trackTrip = async (req, res) => {
+  try {
+    const { trackingCode } = req.params;
+    if (!trackingCode) {
+      return res.status(400).json({ message: 'Tracking code is required' });
+    }
+
+    const { data: trip, error } = await supabase
+      .from('trips')
+      .select(`
+        id, departure_time,
+        routes (from_city, to_city, destination_address),
+        buses (name, plate_number)
+      `)
+      .eq('tracking_code', trackingCode)
+      .single();
+
+    if (error || !trip) {
+      return res.status(404).json({ message: 'Trip not found or invalid tracking code' });
+    }
+
+    // Mock tracking data based on time
+    const now = new Date();
+    const departure = new Date(trip.departure_time);
+    const diff = now - departure;
+
+    let status = 'Scheduled';
+    let location = trip.routes?.from_city || 'Origin';
+
+    if (diff > 0 && diff < 4 * 60 * 60000) { // Assuming 4 hour trip
+      status = 'In Transit';
+      location = 'Highway (En route)';
+    } else if (diff >= 4 * 60 * 60000) {
+      status = 'Arrived';
+      location = trip.routes?.to_city || 'Destination';
+    }
+
+    res.status(200).json({
+      tracking_code: trackingCode,
+      status,
+      current_location: location,
+      trip_details: trip
+    });
+  } catch (error) {
+    console.error('trackTrip error:', error);
+    res.status(500).json({ message: 'Server error tracking trip' });
+  }
+};
+
+export const createRoute = async (req, res) => {
+  try {
+    const { origin, destination, destination_address, estimated_duration } = req.body;
+    if (!origin || !destination) {
+      return res.status(400).json({ message: 'Origin and destination are required' });
+    }
+    const { data, error } = await supabase
+      .from('routes')
+      .insert([{ 
+        origin, 
+        destination, 
+        destination_address, 
+        estimated_duration,
+        from_city: origin,
+        to_city: destination,
+        duration_mins: parseInt(estimated_duration) || 240
+      }])
+      .select()
+      .single();
+    if (error) throw error;
+    res.status(201).json({ message: 'Route created', route: data });
+  } catch (error) {
+    console.error('Create route error:', error);
+    res.status(500).json({ message: 'Server error creating route' });
+  }
+};
+
+export const updateRoute = async (req, res) => {
+  try {
+    const { routeId } = req.params;
+    const updates = req.body;
+    
+    // Also update legacy columns if origin/destination is provided
+    if (updates.origin) updates.from_city = updates.origin;
+    if (updates.destination) updates.to_city = updates.destination;
+    
+    const { data, error } = await supabase
+      .from('routes')
+      .update(updates)
+      .eq('id', routeId)
+      .select()
+      .single();
+    if (error) throw error;
+    res.status(200).json({ message: 'Route updated', route: data });
+  } catch (error) {
+    console.error('Update route error:', error);
+    res.status(500).json({ message: 'Server error updating route' });
+  }
+};
+
+export const deleteRoute = async (req, res) => {
+  try {
+    const { routeId } = req.params;
+    const { error } = await supabase.from('routes').delete().eq('id', routeId);
+    if (error) throw error;
+    res.status(200).json({ message: 'Route deleted successfully' });
+  } catch (error) {
+    console.error('Delete route error:', error);
+    res.status(500).json({ message: 'Server error deleting route' });
   }
 };

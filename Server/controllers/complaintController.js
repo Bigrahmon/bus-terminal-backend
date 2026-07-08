@@ -28,3 +28,19 @@ export const submitComplaint = async (req, res) => {
     res.status(500).json({ message: 'Server error submitting complaint' });
   }
 };
+
+export const getComplaints = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('complaints')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.status(200).json({ complaints: data });
+  } catch (error) {
+    console.error('Fetch complaints error:', error);
+    res.status(500).json({ message: 'Server error fetching complaints' });
+  }
+};

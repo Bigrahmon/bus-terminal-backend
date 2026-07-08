@@ -28,11 +28,13 @@
     { label: 'Routes',    href: 'destinations.html' },
     { label: 'Tickets',   href: 'index.html#tickets' },
     { label: 'Support',   href: 'complaint.html' },
+    { label: 'Admin',     href: 'admin-panel.html' },
   ];
 
   const authLinks = [
     { label: 'Dashboard',  href: 'dashboard.html' },
     { label: 'My Tickets', href: 'tickets.html' },
+    { label: 'Admin',      href: 'admin-panel.html' },
   ];
 
   /* ── Detect current page for active state ──────────────────── */

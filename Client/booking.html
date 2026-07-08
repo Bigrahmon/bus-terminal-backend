@@ -124,6 +124,27 @@
               <textarea id="booking-notes" placeholder="Tell us any special requirements."></textarea>
             </div>
 
+            <div class="price-summary" id="price-summary" style="margin-top: 16px; padding: 16px; background: var(--surface-bg); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: none;">
+              <h4 style="margin-bottom: 8px;">Price Summary</h4>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>Base Fare</span>
+                <span id="base-fare-display">₦0.00</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>Security Fee</span>
+                <span id="security-fee-display">₦500.00</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid var(--border-color); padding-top: 8px;">
+                <span>Total Amount</span>
+                <span id="total-price-display" style="color: var(--primary-light);">₦0.00</span>
+              </div>
+            </div>
+
+            <div class="field-group checkbox-group" style="margin: 20px 0; display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="terms-agreed" required style="width: auto;" />
+              <label for="terms-agreed" style="margin: 0; font-weight: normal;">I agree to the <a href="terms-and-conditions.html" target="_blank" style="color: var(--primary-light);">Terms and Conditions</a> for necessary information disclosure.</label>
+            </div>
+
             <button type="submit" class="primary-button">Submit booking details</button>
           </form>
         </div>
@@ -152,6 +173,9 @@
       window.location.href = 'index.html';
     }
 
+    let currentTripPrice = 0;
+    let currentSecurityFee = 500;
+
     async function fetchSeats() {
       if (!tripId) return;
       const seatGrid = document.getElementById('seat-grid');
@@ -161,6 +185,9 @@
         if (response.ok) {
           const data = await response.json();
           renderSeatGrid(data.seats);
+          
+          // Note: In a real app we'd fetch the trip details directly or have it returned with seats
+          // We will mock the price display update here until seat is selected.
         } else {
           const errorData = await response.json();
           seatGrid.innerHTML = `<p style="grid-column: 1 / -1; color: red;">Error: ${errorData.message || 'Could not load seats'}</p>`;
@@ -230,6 +257,14 @@
           selectedSeat = seatLabel;
           document.getElementById('selected-seat-info').classList.remove('hidden');
           document.getElementById('display-seat-number').textContent = seatLabel;
+          
+          // Show price summary (assuming base 15000 for demo)
+          currentTripPrice = 15000;
+          document.getElementById('price-summary').style.display = 'block';
+          document.getElementById('base-fare-display').textContent = `₦${currentTripPrice.toLocaleString()}`;
+          document.getElementById('security-fee-display').textContent = `₦${currentSecurityFee.toLocaleString()}`;
+          document.getElementById('total-price-display').textContent = `₦${(currentTripPrice + currentSecurityFee).toLocaleString()}`;
+          
           startTimer();
           fetchSeats(); // Refresh grid
         } else {
@@ -258,6 +293,7 @@
           alert('Seat hold expired');
           selectedSeat = null;
           document.getElementById('selected-seat-info').classList.add('hidden');
+          document.getElementById('price-summary').style.display = 'none';
           fetchSeats();
         }
       }, 1000);
@@ -267,6 +303,12 @@
       e.preventDefault();
       if (!selectedSeat) {
         alert('Please select a seat first');
+        return;
+      }
+      
+      const termsAgreed = document.getElementById('terms-agreed').checked;
+      if (!termsAgreed) {
+        alert('You must agree to the Terms and Conditions to proceed.');
         return;
       }
 

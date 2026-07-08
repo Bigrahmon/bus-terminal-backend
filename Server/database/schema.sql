@@ -18,6 +18,7 @@ CREATE TABLE routes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     origin VARCHAR(100) NOT NULL,
     destination VARCHAR(100) NOT NULL,
+    destination_address VARCHAR(255),
     estimated_duration VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(origin, destination)
@@ -40,6 +41,8 @@ CREATE TABLE trips (
     departure_date DATE NOT NULL,
     departure_time TIME NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
+    security_fee DECIMAL(10, 2) DEFAULT 500,
+    tracking_code VARCHAR(50) UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -71,6 +74,8 @@ CREATE TABLE bookings (
     next_of_kin_name VARCHAR(255) NOT NULL,
     next_of_kin_phone VARCHAR(50) NOT NULL,
     status VARCHAR(50) DEFAULT 'confirmed',
+    total_price DECIMAL(10, 2),
+    reminder_sent BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(seat_id)
 );

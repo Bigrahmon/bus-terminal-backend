@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riderr | GPS Tracking</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand">
+        <div class="logo">🚌</div>
+        <div>
+          <h1>Riderr Tracking</h1>
+          <p>Monitor live bus movement once you are signed in.</p>
+        </div>
+      </div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="gps-tracking.html" class="active-link">GPS Tracking</a>
+        <a href="booking.html">Book ride</a>
+        <a href="complaint.html">Complaint</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="page-panel tracking-panel">
+        <div class="page-heading">
+          <span class="eyebrow">Live GPS tracking</span>
+          <h2>Follow your bus in real time.</h2>
+          <p>Secure access is enabled through your Riderr login, so the tracking view stays available only to signed-in travelers.</p>
+        </div>
+
+        <div style="margin-bottom: 24px; text-align: center;">
+          <input type="text" id="tracking-input" placeholder="Enter Tracking Code (e.g., TRK-XXXXXX)" style="padding: 10px; width: 300px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);" />
+          <button id="track-btn" class="primary-button" style="margin-left: 8px;">Track</button>
+        </div>
+
+        <div class="tracking-grid">
+          <div class="tracking-card tracking-map-card">
+            <div class="card-top">
+              <div>
+                <p class="eyebrow">Active route</p>
+                <h3>Lagos → Ado Ekiti</h3>
+              </div>
+              <span class="status-pill status-available">On schedule</span>
+            </div>
+            <div class="tracking-map" aria-label="Bus tracking map preview">
+              <div class="tracking-route-line"></div>
+              <div class="tracking-stop tracking-stop-one">Lagos</div>
+              <div class="tracking-stop tracking-stop-two">Ibadan</div>
+              <div class="tracking-stop tracking-stop-three">Ado Ekiti</div>
+              <div class="tracking-bus-marker">🚌</div>
+            </div>
+          </div>
+
+          <div class="tracking-card">
+            <div class="card-top">
+              <div>
+                <p class="eyebrow">Trip status</p>
+                <h3>Current details</h3>
+              </div>
+            </div>
+            <p id="tracking-user" class="note">Checking session…</p>
+            <div id="tracking-error" style="color: red; margin-bottom: 10px; display: none;"></div>
+            <ul class="tracking-list" id="tracking-details">
+              <li><span>Bus</span><strong id="track-bus-name">--</strong></li>
+              <li><span>Status</span><strong id="track-status">--</strong></li>
+              <li><span>Location</span><strong id="track-location">--</strong></li>
+              <li><span>Departure</span><strong id="track-departure">--</strong></li>
+            </ul>
+            <a href="dashboard.html" class="primary-button">Back to dashboard</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const userStr = localStorage.getItem('user');
+    const currentUser = userStr ? JSON.parse(userStr) : null;
+    const userLabel = document.getElementById('tracking-user');
+
+    if (!currentUser || !currentUser.id) {
+      window.location.replace('login.html');
+    } else {
+      userLabel.textContent = `Signed in as ${currentUser.name || 'traveler'}`;
+    }
+    
+    document.getElementById('track-btn').addEventListener('click', async () => {
+      const code = document.getElementById('tracking-input').value.trim();
+      const errDiv = document.getElementById('tracking-error');
+      if (!code) return;
+      
+      errDiv.style.display = 'none';
+      
+      try {
+        const response = await fetch(`https://bus-terminal-backend.onrender.com/api/trips/track/${code}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          const trip = data.trip_details;
+          const route = trip.routes;
+          const bus = trip.buses;
+          
+          document.querySelector('.tracking-map-card h3').textContent = `${route.from_city} → ${route.to_city}`;
+          document.querySelector('.status-pill').textContent = data.status;
+          
+          document.getElementById('track-bus-name').textContent = bus.name;
+          document.getElementById('track-status').textContent = data.status;
+          document.getElementById('track-location').textContent = data.current_location;
+          document.getElementById('track-departure').textContent = new Date(trip.departure_time).toLocaleString();
+          
+          // Update visual map stops
+          document.querySelector('.tracking-stop-one').textContent = route.from_city;
+          document.querySelector('.tracking-stop-three').textContent = route.to_city;
+          
+        } else {
+          errDiv.textContent = data.message || 'Tracking failed';
+          errDiv.style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        errDiv.textContent = 'Network error checking tracking code.';
+        errDiv.style.display = 'block';
+      }
+    });
+    
+    // Auto fill from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get('code');
+    if (codeParam) {
+      document.getElementById('tracking-input').value = codeParam;
+      document.getElementById('track-btn').click();
+    }
+  </script>
+</body>
+</html>
