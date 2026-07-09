@@ -4,74 +4,303 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riderr | My Tickets</title>
+  <meta name="description" content="View and manage your Riderr booked tickets. Access your QR codes, trip details, and live GPS tracking." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
+    /* ── Page-level tokens ── */
+    :root {
+      --ticket-bg: rgba(255,255,255,0.03);
+      --ticket-border: rgba(255,255,255,0.08);
+      --ticket-radius: 20px;
+      --accent: #4f8eff;
+      --accent-glow: rgba(79,142,255,0.25);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    /* ── Page Heading ── */
+    .page-panel { animation: fadeInUp 0.5s ease both; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Loading / Error states ── */
+    .state-box {
+      text-align: center;
+      padding: 60px 40px;
+      background: var(--ticket-bg);
+      border: 1px dashed var(--ticket-border);
+      border-radius: var(--ticket-radius);
+      color: var(--text-muted, #8a9ab5);
+    }
+    .state-box .state-icon { font-size: 3rem; margin-bottom: 16px; }
+    .state-box h3 { margin: 0 0 8px; color: #c8d4ea; font-size: 1.2rem; }
+    .state-box p  { margin: 0 0 20px; font-size: 0.9rem; line-height: 1.6; }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(79,142,255,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Tickets list ── */
     .tickets-container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      margin-top: 24px;
+      gap: 20px;
+      margin-top: 28px;
     }
+
+    /* ── Ticket card ── */
     .ticket-card {
-      background: var(--surface-bg);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      background: var(--ticket-bg);
+      border: 1px solid var(--ticket-border);
+      border-radius: var(--ticket-radius);
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      animation: fadeInUp 0.4s ease both;
     }
+    .ticket-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px var(--accent-glow);
+    }
+
+    /* Accent bar at top */
+    .ticket-accent-bar {
+      height: 4px;
+      background: linear-gradient(90deg, #4f8eff, #a855f7, #ec4899);
+    }
+
+    .ticket-inner { padding: 24px; }
+
+    /* Header row */
     .ticket-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--ticket-border);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .ticket-header h3 {
-      margin: 0;
-      color: var(--primary-light);
+    .ticket-route { flex: 1; min-width: 180px; }
+    .ticket-route h3 {
+      margin: 0 0 4px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #e2eaff, #a5c0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .ticket-code {
-      font-weight: 600;
-      font-family: monospace;
-      font-size: 1.1rem;
-      background: var(--bg-color);
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
+    .ticket-route small { color: #6b7fa0; font-size: 0.82rem; }
+
+    .ticket-codes { text-align: right; }
+    .booking-code-chip {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(79,142,255,0.15), rgba(168,85,247,0.1));
+      border: 1px solid rgba(79,142,255,0.3);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #a5c0ff;
+      margin-bottom: 6px;
     }
+    .tracking-chip {
+      font-size: 0.78rem;
+      color: #6b7fa0;
+      font-family: 'Courier New', monospace;
+    }
+    .tracking-chip span { color: #4f8eff; }
+
+    /* Body: details + QR */
     .ticket-body {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    /* Details grid */
+    .ticket-details {
+      flex: 1;
+      min-width: 240px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 16px;
     }
-    .ticket-detail {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+    .detail-item { display: flex; flex-direction: column; gap: 4px; }
     .detail-label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+      font-size: 0.72rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
+      color: #4f6080;
+      font-weight: 600;
     }
     .detail-value {
+      font-size: 0.95rem;
       font-weight: 500;
+      color: #c8d4ea;
     }
+    .detail-value.accent  { color: var(--accent); font-weight: 700; }
+    .detail-value.success { color: var(--success); font-weight: 700; }
+    .detail-value.cap     { text-transform: capitalize; }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .status-badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-confirmed  { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+    .status-confirmed::before  { background: var(--success); }
+    .status-pending    { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+    .status-pending::before    { background: var(--warning); }
+    .status-cancelled  { background: rgba(239,68,68,0.12);  color: var(--danger);  border: 1px solid rgba(239,68,68,0.3); }
+    .status-cancelled::before  { background: var(--danger); }
+
+    /* QR Panel */
+    .ticket-qr-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 140px;
+    }
+    .qr-wrapper {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .qr-label {
+      font-size: 0.72rem;
+      color: #4f6080;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    /* Divider */
+    .ticket-divider {
+      border: none;
+      border-top: 1px dashed rgba(255,255,255,0.06);
+      margin: 20px 0 16px;
+      position: relative;
+    }
+    .ticket-divider::before,
+    .ticket-divider::after {
+      content: '';
+      width: 18px; height: 18px;
+      background: #0c1220;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+    }
+    .ticket-divider::before { left: -9px; }
+    .ticket-divider::after  { right: -9px; }
+
+    /* Footer actions */
     .ticket-footer {
       display: flex;
+      gap: 10px;
       justify-content: flex-end;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-color);
+      flex-wrap: wrap;
     }
-    .no-tickets {
-      text-align: center;
-      padding: 40px;
-      color: var(--text-muted);
-      background: var(--surface-bg);
-      border-radius: var(--radius-lg);
-      border: 1px dashed var(--border-color);
+
+    .btn-track {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(135deg, rgba(79,142,255,0.15), rgba(79,142,255,0.05));
+      border: 1px solid rgba(79,142,255,0.4);
+      color: var(--accent);
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-track:hover {
+      background: linear-gradient(135deg, rgba(79,142,255,0.25), rgba(79,142,255,0.1));
+      box-shadow: 0 0 20px rgba(79,142,255,0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-print {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #8a9ab5;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-print:hover {
+      background: rgba(255,255,255,0.08);
+      color: #c8d4ea;
+    }
+
+    /* Retry button */
+    .retry-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #4f8eff, #a855f7);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s ease;
+    }
+    .retry-btn:hover { opacity: 0.85; }
+
+    /* Print styles */
+    @media print {
+      .site-header, .ticket-footer, .btn-track, .btn-print { display: none !important; }
+      .ticket-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+      body { background: white !important; color: #111 !important; }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .ticket-body { flex-direction: column; }
+      .ticket-qr-panel { flex-direction: row; align-items: center; }
+      .ticket-header { flex-direction: column; }
+      .ticket-codes { text-align: left; }
     }
   </style>
 </head>
@@ -98,152 +327,222 @@
         </div>
 
         <div id="tickets-list" class="tickets-container">
-          <div class="no-tickets">Loading tickets...</div>
+          <div class="state-box" id="loading-box">
+            <div class="spinner"></div>
+            <h3>Loading your tickets…</h3>
+            <p id="loading-msg">Connecting to server. This may take a moment on first load.</p>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
+  <!-- Scripts -->
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) {
-        alert('Please login to view your tickets');
-        window.location.href = 'login.html';
-        return;
-      }
+    // ── Auth guard ──────────────────────────────────────────────
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      alert('Please login to view your tickets.');
+      window.location.href = 'login.html';
+    }
+    const user = JSON.parse(userStr || '{}');
+    if (!user || !user.id) {
+      alert('Invalid session. Please login again.');
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
 
-      const user = JSON.parse(userStr);
-      if (!user || !user.id) {
-        alert('Invalid user session. Please login again.');
-        localStorage.removeItem('user');
-        window.location.href = 'login.html';
-        return;
+    // ── Fetch with retry (handles Render cold-start sleep) ─────
+    async function fetchWithRetry(url, attempts = 3, delayMs = 4000) {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const resp = await fetch(url);
+          return resp;
+        } catch (err) {
+          if (i === attempts - 1) throw err;
+          const waitMsg = document.getElementById('loading-msg');
+          if (waitMsg) waitMsg.textContent = `Server waking up… retrying (${i + 1}/${attempts - 1})`;
+          await new Promise(r => setTimeout(r, delayMs));
+        }
       }
-      const ticketsContainer = document.getElementById('tickets-list');
+    }
 
+    // ── Load tickets ────────────────────────────────────────────
+    async function loadTickets() {
+      const container = document.getElementById('tickets-list');
       try {
-        const response = await fetch(`${API_URL}/user/${user.id}/bookings`);
+        const response = await fetchWithRetry(`${API_URL}/user/${user.id}/bookings`);
         const data = await response.json();
-        
+
         if (response.ok) {
-          renderTickets(data.bookings, ticketsContainer);
+          renderTickets(data.bookings, container);
         } else {
-          console.error('Server returned error:', data);
-          ticketsContainer.innerHTML = `<div class="no-tickets">Failed to load tickets. <br><small>${data.message || ''} ${data.details || ''}</small></div>`;
+          showError(container, data.message || 'Failed to load tickets.', data.details || '');
         }
       } catch (err) {
         console.error('Error fetching tickets:', err);
-        ticketsContainer.innerHTML = '<div class="no-tickets">Network error. Please try again later.</div>';
+        showError(container, 'Could not reach the server.', 'Check your internet connection or try again in a moment.');
       }
-    });
+    }
 
+    function showError(container, title, detail) {
+      container.innerHTML = `
+        <div class="state-box">
+          <div class="state-icon">⚠️</div>
+          <h3>${title}</h3>
+          <p>${detail}</p>
+          <button class="retry-btn" onclick="retryLoad()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Try Again
+          </button>
+        </div>`;
+    }
+
+    function retryLoad() {
+      const container = document.getElementById('tickets-list');
+      container.innerHTML = `
+        <div class="state-box" id="loading-box">
+          <div class="spinner"></div>
+          <h3>Loading your tickets…</h3>
+          <p id="loading-msg">Reconnecting to server…</p>
+        </div>`;
+      loadTickets();
+    }
+
+    // ── Render tickets ──────────────────────────────────────────
     function renderTickets(bookings, container) {
       if (!bookings || bookings.length === 0) {
-        container.innerHTML = '<div class="no-tickets">You have no booked tickets yet. <br><br> <a href="index.html#tickets" class="primary-button" style="display:inline-block; margin-top: 10px;">Book a Ride</a></div>';
+        container.innerHTML = `
+          <div class="state-box">
+            <div class="state-icon">🎟️</div>
+            <h3>No tickets yet</h3>
+            <p>You haven't booked any trips. Find a route and book your first ride!</p>
+            <a href="index.html#tickets" class="retry-btn" style="text-decoration:none;">Book a Ride</a>
+          </div>`;
         return;
       }
 
-      let html = '';
-      bookings.forEach(booking => {
-        const trip = booking.trips;
-        const route = trip ? trip.routes : null;
-        const bus = trip ? trip.buses : null;
-        const seat = booking.seats ? booking.seats.seat_number : 'N/A';
-        
-        // Format dates
-        const dateStr = trip ? new Date(trip.departure_time).toLocaleDateString() : 'N/A';
-        const timeStr = trip ? new Date(trip.departure_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
-        
-        const origin = route ? route.from_city : 'Unknown';
-        const destination = route ? route.to_city : 'Unknown';
-        const destAddress = route ? route.destination_address : 'Main Terminal';
-        const busName = bus ? bus.name : 'Unknown';
-        const plate = bus ? bus.plate_number : '';
-        const trackingCode = trip ? trip.tracking_code : 'N/A';
-        const totalPrice = booking.total_price ? `₦${booking.total_price.toLocaleString()}` : 'N/A';
-        
-        // Data to encode in QR
-        const qrData = JSON.stringify({
-          booking: booking.booking_code,
-          tracking: trackingCode,
-          seat: seat
-        });
+      container.innerHTML = '';
 
-        html += `
-          <div class="ticket-card">
+      bookings.forEach((booking, idx) => {
+        const trip  = booking.trips;
+        const route = trip ? trip.routes : null;
+        const bus   = trip ? trip.buses  : null;
+        const seat  = booking.seats ? booking.seats.seat_number : 'N/A';
+
+        const dateStr = trip ? new Date(trip.departure_time).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+        const timeStr = trip ? new Date(trip.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+
+        const origin      = route ? route.from_city          : 'Unknown';
+        const destination = route ? route.to_city            : 'Unknown';
+        const destAddress = route ? (route.destination_address || 'Main Terminal') : 'Main Terminal';
+        const busName     = bus ? bus.name         : 'N/A';
+        const plate       = bus ? bus.plate_number : '';
+        const trackingCode = trip ? trip.tracking_code : 'N/A';
+        const totalPrice  = booking.total_price ? `₦${Number(booking.total_price).toLocaleString()}` : 'N/A';
+        const status      = (booking.status || 'confirmed').toLowerCase();
+        const statusClass = status === 'confirmed' ? 'status-confirmed'
+                          : status === 'cancelled' ? 'status-cancelled'
+                          : 'status-pending';
+
+        const qrId = `qr-${booking.booking_code}`;
+
+        const card = document.createElement('div');
+        card.className = 'ticket-card';
+        card.style.animationDelay = `${idx * 80}ms`;
+        card.innerHTML = `
+          <div class="ticket-accent-bar"></div>
+          <div class="ticket-inner">
+
             <div class="ticket-header">
-              <div>
+              <div class="ticket-route">
                 <h3>${origin} &rarr; ${destination}</h3>
-                <small style="color: var(--text-muted);">${destAddress}</small>
+                <small>📍 ${destAddress}</small>
               </div>
-              <div style="text-align: right;">
-                <span class="ticket-code">${booking.booking_code}</span>
-                <div style="margin-top: 4px; font-size: 0.85rem;">Track: ${trackingCode}</div>
+              <div class="ticket-codes">
+                <div class="booking-code-chip">${booking.booking_code}</div>
+                <div class="tracking-chip">Track: <span>${trackingCode}</span></div>
               </div>
             </div>
-            
-            <div style="display: flex; gap: 20px; align-items: center;">
-              <div class="ticket-body" style="flex: 1;">
-                <div class="ticket-detail">
+
+            <div class="ticket-body">
+              <div class="ticket-details">
+                <div class="detail-item">
                   <span class="detail-label">Passenger</span>
                   <span class="detail-value">${booking.passenger_name}</span>
                 </div>
-                <div class="ticket-detail">
-                  <span class="detail-label">Date & Time</span>
-                  <span class="detail-value">${dateStr} at ${timeStr}</span>
+                <div class="detail-item">
+                  <span class="detail-label">Date</span>
+                  <span class="detail-value">${dateStr}</span>
                 </div>
-                <div class="ticket-detail">
+                <div class="detail-item">
+                  <span class="detail-label">Departure</span>
+                  <span class="detail-value accent">🕐 ${timeStr}</span>
+                </div>
+                <div class="detail-item">
                   <span class="detail-label">Seat</span>
-                  <span class="detail-value" style="color: var(--primary-light); font-weight: bold;">${seat}</span>
+                  <span class="detail-value accent">💺 ${seat}</span>
                 </div>
-                <div class="ticket-detail">
-                  <span class="detail-label">Bus Details</span>
-                  <span class="detail-value">${busName} <small>(${plate})</small></span>
+                <div class="detail-item">
+                  <span class="detail-label">Bus</span>
+                  <span class="detail-value">${busName} <small style="color:#4f6080;">${plate ? `(${plate})` : ''}</small></span>
                 </div>
-                <div class="ticket-detail">
-                  <span class="detail-label">Total Price</span>
-                  <span class="detail-value" style="color: var(--primary-light);">${totalPrice}</span>
+                <div class="detail-item">
+                  <span class="detail-label">Total Paid</span>
+                  <span class="detail-value success">${totalPrice}</span>
                 </div>
-                <div class="ticket-detail">
+                <div class="detail-item">
                   <span class="detail-label">Status</span>
-                  <span class="detail-value" style="text-transform: capitalize; color: #4ade80;">${booking.status || 'Confirmed'}</span>
+                  <span class="status-badge ${statusClass}">${booking.status || 'Confirmed'}</span>
                 </div>
               </div>
-              
-              <div class="ticket-qr">
-                <canvas id="qr-${booking.booking_code}" width="120" height="120" style="border-radius: 8px; background: white; padding: 4px;"></canvas>
+
+              <div class="ticket-qr-panel">
+                <div class="qr-wrapper">
+                  <canvas id="${qrId}" width="128" height="128"></canvas>
+                </div>
+                <span class="qr-label">Scan at boarding</span>
               </div>
             </div>
-            
+
+            <hr class="ticket-divider" />
+
             <div class="ticket-footer">
-              <button class="secondary-button" onclick="window.print()">Print Ticket</button>
+              <a class="btn-track" href="gps-tracking.html?code=${encodeURIComponent(trackingCode)}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+                Track Bus
+              </a>
+              <button class="btn-print" onclick="window.print()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Ticket
+              </button>
             </div>
-          </div>
-        `;
-      });
-      
-      container.innerHTML = html;
-      
-      // Generate QR codes after adding to DOM
-      bookings.forEach(booking => {
-        const trip = booking.trips;
-        const trackingCode = trip ? trip.tracking_code : 'N/A';
-        const qrData = JSON.stringify({
-          booking: booking.booking_code,
-          tracking: trackingCode
-        });
-        
-        const canvas = document.getElementById(`qr-${booking.booking_code}`);
-        if (canvas) {
-          QRCode.toCanvas(canvas, qrData, { width: 120, margin: 1, color: { dark: '#000000', light: '#ffffff' } }, function (error) {
-            if (error) console.error(error);
+          </div>`;
+
+        container.appendChild(card);
+
+        // Generate QR code for this booking
+        const qrCanvas = document.getElementById(qrId);
+        if (qrCanvas) {
+          const qrPayload = JSON.stringify({
+            booking: booking.booking_code,
+            tracking: trackingCode,
+            seat: seat,
+            passenger: booking.passenger_name
           });
+          QRCode.toCanvas(qrCanvas, qrPayload, {
+            width: 128,
+            margin: 1,
+            color: { dark: '#111111', light: '#ffffff' }
+          }, err => { if (err) console.warn('QR error:', err); });
         }
       });
     }
+
+    // ── Start ───────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', loadTickets);
   </script>
   <script src="nav.js"></script>
 </body>

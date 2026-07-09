@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const TERMII_API_KEY = process.env.TERMII_API_KEY;
-const TERMII_SENDER_ID = process.env.TERMII_SENDER_ID || 'BusGo'; // Or Riderr, let's keep what it was or use BusGo
+const TERMII_SENDER_ID = process.env.TERMII_SENDER_ID || 'N-Alert';
 
 const sendTermiiSMS = async (phone, message) => {
   if (!TERMII_API_KEY || TERMII_API_KEY === 'your_termii_api_key') {
@@ -57,7 +57,8 @@ export const sendBookingSMS = async (phone, busName, seatLabel, departureTime) =
   return sendTermiiSMS(phone, message);
 };
 
-export const sendReminderSMS = async (phone) => {
-  const message = "Your trip starts in 1 hour.";
+export const sendReminderSMS = async (phone, passengerName) => {
+  const name = passengerName ? `, ${passengerName.split(' ')[0]}` : '';
+  const message = `Hi${name}! Your Riderr bus trip starts in less than 2 hours. Please be at the terminal early. Safe travels!`;
   return sendTermiiSMS(phone, message);
 };
