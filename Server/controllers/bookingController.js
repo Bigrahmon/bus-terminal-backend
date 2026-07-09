@@ -213,8 +213,8 @@ export const getUserBookings = async (req, res) => {
           security_fee,
           tracking_code,
           routes (
-            origin,
-            destination,
+            from_city,
+            to_city,
             destination_address
           ),
           buses (

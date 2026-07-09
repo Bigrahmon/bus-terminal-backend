@@ -440,8 +440,8 @@
         const dateStr = trip ? new Date(trip.departure_time).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
         const timeStr = trip ? new Date(trip.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
 
-        const origin      = route ? route.origin             : 'Unknown';
-        const destination = route ? route.destination        : 'Unknown';
+        const origin      = route ? route.from_city          : 'Unknown';
+        const destination = route ? route.to_city            : 'Unknown';
         const destAddress = route ? (route.destination_address || 'Main Terminal') : 'Main Terminal';
         const busName     = bus ? bus.name         : 'N/A';
         const plate       = bus ? bus.plate_number : '';
