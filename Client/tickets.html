@@ -359,6 +359,11 @@
       for (let i = 0; i < attempts; i++) {
         try {
           const resp = await fetch(url);
+          // Render returns a 502 HTML page when waking up.
+          const contentType = resp.headers.get("content-type");
+          if (!resp.ok && contentType && contentType.includes("text/html")) {
+            throw new Error("Server returned HTML (likely waking up). Retrying...");
+          }
           return resp;
         } catch (err) {
           if (i === attempts - 1) throw err;
@@ -435,8 +440,8 @@
         const dateStr = trip ? new Date(trip.departure_time).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
         const timeStr = trip ? new Date(trip.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
 
-        const origin      = route ? route.from_city          : 'Unknown';
-        const destination = route ? route.to_city            : 'Unknown';
+        const origin      = route ? route.origin             : 'Unknown';
+        const destination = route ? route.destination        : 'Unknown';
         const destAddress = route ? (route.destination_address || 'Main Terminal') : 'Main Terminal';
         const busName     = bus ? bus.name         : 'N/A';
         const plate       = bus ? bus.plate_number : '';
