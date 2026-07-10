@@ -27,7 +27,7 @@
           <span class="eyebrow">Travel with comfort</span>
           <h2>Book your bus ticket in under 2 minutes.</h2>
           <p>Find routes, compare prices, reserve seats, and manage your bookings from one modern interface.</p>
-          <a href="booking.html" class="primary-button">Book a Ride</a>
+          <a href="#tickets" class="primary-button">Book a Ride</a>
         </div>
         <div class="hero-visual">
           <div class="media-wrap">
@@ -147,7 +147,7 @@
         }
       } catch (err) {
         console.error('Search error:', err);
-        resultsContainer.innerHTML = '<h4>Mock offline mode: Server not responding</h4>';
+        resultsContainer.innerHTML = '<h4>Cannot reach the server</h4><p style="margin-top:0.5rem;color:#88a5ff;">Start the backend first: open a terminal in the <strong>Server</strong> folder and run <code>npm start</code>, then search again.</p>';
       }
     });
 

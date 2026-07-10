@@ -134,7 +134,7 @@
         }
       } catch (err) {
         console.error('Search error:', err);
-        resultsContainer.innerHTML = '<h4>Mock offline mode: Server not responding</h4>';
+        resultsContainer.innerHTML = '<h4>Cannot reach the server</h4><p style="margin-top:0.5rem;color:#88a5ff;">Start the backend first: open a terminal in the <strong>Server</strong> folder and run <code>npm start</code>, then search again.</p>';
       }
     });
 

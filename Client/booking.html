@@ -169,8 +169,8 @@
     const urlParams = new URLSearchParams(window.location.search);
     const tripId = urlParams.get('tripId');
     if (!tripId) {
-      alert('No trip selected. Please search for a route and select a bus first.');
-      window.location.href = 'index.html';
+      alert('No trip selected. Search for a route, pick a bus, then click Book.');
+      window.location.href = 'index.html#tickets';
     }
 
     let currentTripPrice = 0;
