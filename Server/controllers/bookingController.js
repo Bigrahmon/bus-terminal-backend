@@ -202,6 +202,10 @@ export const getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
 
+    if (!isValidUUID(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
     const { data: bookings, error } = await supabase
       .from('bookings')
       .select(`

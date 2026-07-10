@@ -338,70 +338,114 @@
   </div>
 
   <!-- Scripts -->
-  <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="config.js?v=3"></script>
   <script>
     // ── Auth guard ──────────────────────────────────────────────
     const userStr = localStorage.getItem('user');
     if (!userStr) {
       alert('Please login to view your tickets.');
       window.location.href = 'login.html';
+      throw new Error('Not logged in');
     }
-    const user = JSON.parse(userStr || '{}');
+    const user = JSON.parse(userStr);
     if (!user || !user.id) {
       alert('Invalid session. Please login again.');
       localStorage.removeItem('user');
       window.location.href = 'login.html';
+      throw new Error('Invalid session');
     }
 
-    // ── Fetch with retry (handles Render cold-start sleep) ─────
-    async function fetchWithRetry(url, attempts = 5, delayMs = 6000) {
-      for (let i = 0; i < attempts; i++) {
-        try {
-          const resp = await fetch(url);
-          // Render returns a 502/503 HTML page when cold-starting.
-          const contentType = resp.headers.get("content-type");
-          if (!resp.ok && contentType && contentType.includes("text/html")) {
-            throw new Error("Server is waking up. Retrying...");
-          }
-          return resp;
-        } catch (err) {
-          if (i === attempts - 1) throw err;
-          const waitMsg = document.getElementById('loading-msg');
-          if (waitMsg) waitMsg.textContent = `Server is waking up… please wait (${i + 1}/${attempts})`;
-          await new Promise(r => setTimeout(r, delayMs));
-        }
-      }
+    function isValidUUID(value) {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
     }
 
     // ── Load tickets ────────────────────────────────────────────
     async function loadTickets() {
       const container = document.getElementById('tickets-list');
+      const waitMsg = document.getElementById('loading-msg');
+
+      if (!isValidUUID(user.id)) {
+        showError(
+          container,
+          'Session expired.',
+          'Your login session is invalid. Please sign in again.',
+          'login.html'
+        );
+        return;
+      }
+
       try {
-        const response = await fetchWithRetry(`${API_URL}/user/${user.id}/bookings`);
+        await apiReady;
+        if (waitMsg) waitMsg.textContent = isLocalApi()
+          ? 'Loading your tickets…'
+          : 'Connecting to server…';
+
+        const awake = await wakeServer(90000, (elapsed) => {
+          if (waitMsg) {
+            waitMsg.textContent = `Server is starting up… ${elapsed}s (this only happens once)`;
+          }
+        });
+
+        if (!awake) {
+          showError(
+            container,
+            'Server took too long to respond.',
+            'The server may still be waking up. Please wait a moment and click Try Again.'
+          );
+          return;
+        }
+
+        if (waitMsg) waitMsg.textContent = 'Loading your tickets…';
+        const response = await fetchWithTimeout(
+          `${API_URL}/user/${encodeURIComponent(user.id)}/bookings`,
+          {},
+          60000
+        );
         const data = await response.json();
 
         if (response.ok) {
-          renderTickets(data.bookings, container);
+          await renderTickets(data.bookings, container);
         } else {
-          showError(container, data.message || 'Failed to load tickets.', data.details || '');
+          showError(container, data.message || 'Failed to load tickets.', data.details || data.detail || '');
         }
       } catch (err) {
         console.error('Error fetching tickets:', err);
-        showError(container, 'Could not reach the server.', 'The server may still be waking up. Please wait a moment and click Try Again.');
+        const detail = err?.name === 'AbortError'
+          ? 'The request timed out. Click Try Again.'
+          : (err?.message || 'Unknown error. Make sure the server is running and open http://localhost:3000');
+        showError(container, 'Could not reach the server.', detail);
       }
     }
 
-    function showError(container, title, detail) {
+    let qrLibPromise;
+    function loadQrLib() {
+      if (window.QRCode) return Promise.resolve();
+      if (!qrLibPromise) {
+        qrLibPromise = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+          script.onload = resolve;
+          script.onerror = () => reject(new Error('QR library failed to load'));
+          document.head.appendChild(script);
+        });
+      }
+      return qrLibPromise;
+    }
+
+    function showError(container, title, detail, redirectUrl) {
+      const action = redirectUrl
+        ? `<a href="${redirectUrl}" class="retry-btn" style="text-decoration:none;">Sign In Again</a>`
+        : `<button class="retry-btn" onclick="retryLoad()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Try Again
+          </button>`;
+
       container.innerHTML = `
         <div class="state-box">
           <div class="state-icon">⚠️</div>
           <h3>${title}</h3>
           <p>${detail}</p>
-          <button class="retry-btn" onclick="retryLoad()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            Try Again
-          </button>
+          ${action}
         </div>`;
     }
 
@@ -417,7 +461,7 @@
     }
 
     // ── Render tickets ──────────────────────────────────────────
-    function renderTickets(bookings, container) {
+    async function renderTickets(bookings, container) {
       if (!bookings || bookings.length === 0) {
         container.innerHTML = `
           <div class="state-box">
@@ -427,6 +471,12 @@
             <a href="index.html#tickets" class="retry-btn" style="text-decoration:none;">Book a Ride</a>
           </div>`;
         return;
+      }
+
+      try {
+        await loadQrLib();
+      } catch (err) {
+        console.warn('QR library unavailable:', err);
       }
 
       container.innerHTML = '';
@@ -530,7 +580,7 @@
 
         // Generate QR code for this booking
         const qrCanvas = document.getElementById(qrId);
-        if (qrCanvas) {
+        if (qrCanvas && window.QRCode) {
           const qrPayload = JSON.stringify({
             booking: booking.booking_code,
             tracking: trackingCode,
@@ -547,7 +597,9 @@
     }
 
     // ── Start ───────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', loadTickets);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTickets();
+    });
   </script>
   <script src="nav.js"></script>
 </body>

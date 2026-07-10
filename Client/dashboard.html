@@ -103,6 +103,8 @@
   <script>
 
     document.addEventListener('DOMContentLoaded', async () => {
+      await apiReady;
+
       // 1. Check if user is logged in
       const userStr = localStorage.getItem('user');
       if (!userStr) {
