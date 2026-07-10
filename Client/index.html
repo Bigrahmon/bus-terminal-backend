@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riderr | Bus Ticketing</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="config.js"></script></head>
+  <script src="config.js?v=4"></script></head>
 <body>
   <div class="app-shell">
     <header class="site-header">
@@ -137,17 +137,24 @@
       resultsContainer.innerHTML = '<h4>Searching...</h4>';
 
       try {
-        const response = await fetch(`${API_URL}/trips?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`);
-        
+        await apiReady;
+        if (!isLocalApi()) {
+          resultsContainer.innerHTML = '<h4>Connecting to server…</h4><p style="margin-top:0.5rem;color:#88a5ff;">This may take a moment on first load.</p>';
+          await wakeServer(90000);
+        }
+
+        const { response, data } = await fetchApi(
+          `/trips?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`
+        );
+
         if (response.ok) {
-          const data = await response.json();
           renderResults(data.trips, from, to);
         } else {
-          resultsContainer.innerHTML = '<h4>Error fetching results</h4>';
+          resultsContainer.innerHTML = `<h4>Error fetching results</h4><p style="margin-top:0.5rem;color:#88a5ff;">${data.message || 'Please try again.'}</p>`;
         }
       } catch (err) {
         console.error('Search error:', err);
-        resultsContainer.innerHTML = '<h4>Cannot reach the server</h4><p style="margin-top:0.5rem;color:#88a5ff;">Start the backend first: open a terminal in the <strong>Server</strong> folder and run <code>npm start</code>, then search again.</p>';
+        resultsContainer.innerHTML = `<h4>Cannot reach the server</h4><p style="margin-top:0.5rem;color:#88a5ff;">${connectionErrorMessage('search again')}</p>`;
       }
     });
 

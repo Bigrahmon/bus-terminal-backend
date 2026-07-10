@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riderr | Book a Ride</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="config.js"></script>
+  <script src="config.js?v=4"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -181,9 +181,10 @@
       const seatGrid = document.getElementById('seat-grid');
       seatGrid.innerHTML = 'Loading seats...';
       try {
-        const response = await fetch(`${API_URL}/trips/${tripId}/seats`);
+        await apiReady;
+        if (!isLocalApi()) await wakeServer(90000);
+        const { response, data } = await fetchApi(`/trips/${tripId}/seats`);
         if (response.ok) {
-          const data = await response.json();
           renderSeatGrid(data.seats);
           
           // Note: In a real app we'd fetch the trip details directly or have it returned with seats
@@ -194,7 +195,7 @@
         }
       } catch (err) {
         console.error('Error fetching seats', err);
-        seatGrid.innerHTML = '<p style="grid-column: 1 / -1; color: red;">Failed to connect to server to load seats.</p>';
+        seatGrid.innerHTML = `<p style="grid-column: 1 / -1; color: red;">Failed to connect to server. ${connectionErrorMessage('refresh the page')}</p>`;
       }
     }
 
@@ -247,7 +248,8 @@
       }
 
       try {
-        const response = await fetch(`${API_URL}/seats/hold`, {
+        await apiReady;
+        const { response, data } = await fetchApi('/seats/hold', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ trip_id: tripId, seat_number: seatLabel, user_id: currentUser.id })
@@ -268,12 +270,11 @@
           startTimer();
           fetchSeats(); // Refresh grid
         } else {
-          const err = await response.json();
-          alert(err.message || 'Failed to hold seat');
+          alert(data.message || 'Failed to hold seat');
         }
       } catch (err) {
         console.error('Hold error', err);
-        alert('Could not connect to server. Please make sure the backend is running.');
+        alert('Could not connect to server. ' + connectionErrorMessage('try again'));
       }
     }
 
@@ -328,27 +329,29 @@
       };
 
       try {
-        const response = await fetch(`${API_URL}/bookings`, {
+        await apiReady;
+        const { response, data } = await fetchApi('/bookings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(bookingData)
         });
 
         if (response.ok) {
-          const data = await response.json();
           alert(`Booking Confirmed! Your booking code: ${data.booking.booking_code}`);
           window.location.href = 'tickets.html';
         } else {
-          const err = await response.json();
-          alert(err.message || 'Booking failed');
+          alert(data.message || 'Booking failed');
         }
       } catch (err) {
         console.error('Booking error', err);
-        alert('Error: ' + err.message);
+        alert('Could not complete booking. ' + connectionErrorMessage('try again'));
       }
     });
 
-    fetchSeats();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await apiReady;
+      fetchSeats();
+    });
   </script>
   <script src="nav.js"></script>
 </body>

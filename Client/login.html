@@ -81,7 +81,7 @@
     </main>
   </div>
 
-  <script src="config.js"></script>
+  <script src="config.js?v=4"></script>
   <script>
 
     // Toggle forms
@@ -149,7 +149,7 @@
       } catch (err) {
         console.error('Login error:', err);
         status.textContent = '';
-        alert('Could not connect to the API. Start the backend with: cd Server && npm start');
+        alert('Could not connect to the API. ' + connectionErrorMessage('try again'));
         btn.disabled = false;
         btn.textContent = 'Sign in';
       }
@@ -206,7 +206,7 @@
       } catch (err) {
         console.error('Register error:', err);
         status.textContent = '';
-        alert('Could not connect to the API. Start the backend with: cd Server && npm start');
+        alert('Could not connect to the API. ' + connectionErrorMessage('try again'));
         btn.disabled = false;
         btn.textContent = 'Create account';
       }

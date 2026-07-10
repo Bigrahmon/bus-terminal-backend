@@ -9,7 +9,8 @@ if (window.location.protocol === 'file:') {
 const RENDER_API = 'https://bus-terminal-backend.onrender.com/api';
 const LOCAL_API = 'http://localhost:3000/api';
 
-let API_URL = LOCAL_API;
+// Default to production so mobile/online users never hit localhost by mistake
+let API_URL = RENDER_API;
 
 function isLocalApi() {
   return (
@@ -19,6 +20,13 @@ function isLocalApi() {
   );
 }
 
+function connectionErrorMessage(action = 'try again') {
+  if (isLocalApi()) {
+    return `Start the backend first: open a terminal in the <strong>Server</strong> folder and run <code>npm start</code>, then ${action}.`;
+  }
+  return `The server may still be waking up. Please wait a moment and ${action}.`;
+}
+
 function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -26,7 +34,7 @@ function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
   return fetch(url, { ...rest, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
-async function probeApi(baseUrl, timeoutMs = 5000) {
+async function probeApi(baseUrl, timeoutMs = 8000) {
   try {
     const resp = await fetchWithTimeout(`${baseUrl}/health`, {}, timeoutMs);
     const ct = resp.headers.get('content-type') || '';
@@ -39,13 +47,18 @@ async function probeApi(baseUrl, timeoutMs = 5000) {
 }
 
 async function initApi() {
-  // App served by our Express server — always use same-origin /api
-  if (window.location.port === '3000') {
-    API_URL = '/api';
-    return API_URL;
+  const origin = window.location.origin;
+
+  // Same-origin API when frontend is served by our Express app (localhost:3000 or Render)
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (await probeApi(`${origin}/api`, 20000)) {
+      API_URL = '/api';
+      return API_URL;
+    }
+    if (attempt < 3) await new Promise((r) => setTimeout(r, 3000));
   }
 
-  if (await probeApi(LOCAL_API, 5000)) {
+  if (await probeApi(LOCAL_API, 3000)) {
     API_URL = LOCAL_API;
     return API_URL;
   }
