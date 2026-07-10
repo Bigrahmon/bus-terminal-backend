@@ -230,10 +230,7 @@ export const createRoute = async (req, res) => {
     const { data, error } = await supabase
       .from('routes')
       .insert([{ 
-        origin, 
-        destination, 
         destination_address, 
-        estimated_duration,
         from_city: origin,
         to_city: destination,
         duration_mins: parseInt(estimated_duration) || 240
@@ -251,11 +248,21 @@ export const createRoute = async (req, res) => {
 export const updateRoute = async (req, res) => {
   try {
     const { routeId } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body };
     
-    // Also update legacy columns if origin/destination is provided
-    if (updates.origin) updates.from_city = updates.origin;
-    if (updates.destination) updates.to_city = updates.destination;
+    // Map frontend fields to database columns
+    if (updates.origin) {
+      updates.from_city = updates.origin;
+      delete updates.origin;
+    }
+    if (updates.destination) {
+      updates.to_city = updates.destination;
+      delete updates.destination;
+    }
+    if (updates.estimated_duration) {
+      updates.duration_mins = parseInt(updates.estimated_duration) || 240;
+      delete updates.estimated_duration;
+    }
     
     const { data, error } = await supabase
       .from('routes')
