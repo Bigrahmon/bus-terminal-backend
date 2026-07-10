@@ -355,20 +355,20 @@
     }
 
     // ── Fetch with retry (handles Render cold-start sleep) ─────
-    async function fetchWithRetry(url, attempts = 3, delayMs = 4000) {
+    async function fetchWithRetry(url, attempts = 5, delayMs = 6000) {
       for (let i = 0; i < attempts; i++) {
         try {
           const resp = await fetch(url);
-          // Render returns a 502 HTML page when waking up.
+          // Render returns a 502/503 HTML page when cold-starting.
           const contentType = resp.headers.get("content-type");
           if (!resp.ok && contentType && contentType.includes("text/html")) {
-            throw new Error("Server returned HTML (likely waking up). Retrying...");
+            throw new Error("Server is waking up. Retrying...");
           }
           return resp;
         } catch (err) {
           if (i === attempts - 1) throw err;
           const waitMsg = document.getElementById('loading-msg');
-          if (waitMsg) waitMsg.textContent = `Server waking up… retrying (${i + 1}/${attempts - 1})`;
+          if (waitMsg) waitMsg.textContent = `Server is waking up… please wait (${i + 1}/${attempts})`;
           await new Promise(r => setTimeout(r, delayMs));
         }
       }
@@ -388,7 +388,7 @@
         }
       } catch (err) {
         console.error('Error fetching tickets:', err);
-        showError(container, 'Could not reach the server.', 'Make sure the backend is running: open a terminal in the Server folder and run npm start. Then click Try Again.');
+        showError(container, 'Could not reach the server.', 'The server may still be waking up. Please wait a moment and click Try Again.');
       }
     }
 
