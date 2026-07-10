@@ -9,6 +9,29 @@ if (window.location.protocol === 'file:') {
 const RENDER_API = 'https://bus-terminal-backend.onrender.com/api';
 const LOCAL_API = 'http://localhost:3000/api';
 
+const CITIES = [
+  'Lagos',
+  'Ibadan',
+  'Akure',
+  'Abuja',
+  'Port Harcourt',
+  'Ondo',
+  'Ado Ekiti',
+];
+
+function populateCitySelect(selectId, selectedValue) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  select.innerHTML = CITIES.map(
+    (city) => `<option value="${city}"${city === selectedValue ? ' selected' : ''}>${city}</option>`
+  ).join('');
+}
+
+function initCitySelects() {
+  populateCitySelect('from', 'Lagos');
+  populateCitySelect('to', 'Ado Ekiti');
+}
+
 // Default to production so mobile/online users never hit localhost by mistake
 let API_URL = RENDER_API;
 

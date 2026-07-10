@@ -76,20 +76,11 @@
           <form id="search-form" class="search-form">
             <div class="field-group">
               <label for="from">From</label>
-              <select id="from">
-                <option value="Lagos">Lagos</option>
-                <option value="Ibadan">Ibadan</option>
-                <option value="Akure">Akure</option>
-                <option value="Abuja">Abuja</option>
-                <option value="Port Harcourt">Port Harcourt</option>
-                <option value="Ondo">Ondo</option>
-              </select>
+              <select id="from"></select>
             </div>
             <div class="field-group">
               <label for="to">To</label>
-              <select id="to">
-                <option value="Ado Ekiti">Ado Ekiti</option>
-              </select>
+              <select id="to"></select>
             </div>
             <div class="field-group">
               <label for="date">Date</label>
@@ -110,7 +101,7 @@
   </div>
 
   <script>
-    
+    initCitySelects();
 
     document.getElementById('search-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -119,6 +110,12 @@
       const to = document.getElementById('to').value;
       const date = document.getElementById('date').value;
       const resultsContainer = document.getElementById('search-results');
+
+      if (from === to) {
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.innerHTML = '<h4>Please choose different cities for From and To.</h4>';
+        return;
+      }
       
       resultsContainer.classList.remove('hidden');
       resultsContainer.innerHTML = '<h4>Searching...</h4>';
