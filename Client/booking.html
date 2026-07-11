@@ -5,19 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riderr | Book a Ride</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="config.js?v=4"></script>
+  <script src="config.js?v=5"></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="site-header">
       <div class="brand">
-        <a href="index.html">
-          <div class="logo">🚌</div>
-          <div>
-            <h1>Riderr</h1>
-            <p>Book your ride with traveler details.</p>
-          </div>
-        </a>
+        <div class="logo">🚌</div>
+        <div>
+          <h1>Riderr</h1>
+          <p>Book your ride with traveler details.</p>
+        </div>
       </div>
       <nav></nav>
     </header>
@@ -28,28 +26,6 @@
           <span class="eyebrow">Ride booking</span>
           <h2>Fill in passenger details before your trip</h2>
           <p>Provide contact, next-of-kin, and identification information so we can process your booking safely.</p>
-        </div>
-
-        <div class="seat-map-container">
-          <div class="seat-map-header">
-            <h3>Select your seat</h3>
-            <div class="seat-legend">
-              <div class="legend-item"><div class="legend-box legend-available"></div> Available</div>
-              <div class="legend-item"><div class="legend-box legend-held"></div> Selected</div>
-              <div class="legend-item"><div class="legend-box legend-booked"></div> Booked</div>
-            </div>
-          </div>
-          <div class="bus-layout">
-            <div class="driver-seat">🚙</div>
-            <!-- Seats will be injected by JS -->
-            <div id="seat-grid"></div>
-          </div>
-          <div class="selected-seat-info hidden" id="selected-seat-info">
-            <div>
-              <h4>Seat <span id="display-seat-number">--</span></h4>
-              <p>Reserved for <span class="timer" id="hold-timer">10:00</span></p>
-            </div>
-          </div>
         </div>
 
         <div class="form-panel">
@@ -79,12 +55,77 @@
             <div class="booking-grid">
               <div class="field-group">
                 <label for="booking-from">Departure</label>
-                <input id="booking-from" type="text" placeholder="Lagos" required />
+                <select id="booking-from" required>
+                  <option value="">Select departure</option>
+                  <option value="Lagos">Lagos</option>
+                  <option value="Ibadan">Ibadan</option>
+                  <option value="Akure">Akure</option>
+                  <option value="Abuja">Abuja</option>
+                  <option value="Port Harcourt">Port Harcourt</option>
+                  <option value="Ondo">Ondo</option>
+                  <option value="Ado Ekiti">Ado Ekiti</option>
+                </select>
               </div>
               <div class="field-group">
                 <label for="booking-to">Destination</label>
-                <input id="booking-to" type="text" placeholder="Ado Ekiti" required />
+                <select id="booking-to" required>
+                  <option value="">Select destination</option>
+                  <option value="Ado Ekiti">Ado Ekiti</option>
+                  <option value="Lagos">Lagos</option>
+                  <option value="Ibadan">Ibadan</option>
+                  <option value="Akure">Akure</option>
+                  <option value="Abuja">Abuja</option>
+                  <option value="Port Harcourt">Port Harcourt</option>
+                  <option value="Ondo">Ondo</option>
+                </select>
               </div>
+            </div>
+
+            <div class="booking-grid">
+              <div class="field-group">
+                <label for="bus-select">Select bus</label>
+                <select id="bus-select" required disabled>
+                  <option value="">Choose route and date first</option>
+                </select>
+                <p class="hint-text" id="bus-load-hint">All fleet buses for your route will appear here.</p>
+              </div>
+              <div class="field-group">
+                <label for="bus-suite">Bus suite</label>
+                <select id="bus-suite" required>
+                  <option value="">Select suite</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Business">Business</option>
+                  <option value="VIP">VIP</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="booking-grid">
+              <div class="price-summary">
+                <p>Estimated fare</p>
+                <strong id="estimated-fare">₦0</strong>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="park-destination">Park destination</label>
+              <select id="park-destination" disabled>
+                <option value="">Select a park for your destination</option>
+              </select>
+              <p class="hint-text">Only parks matching your selected destination are shown.</p>
+            </div>
+
+            <div class="park-info-card">
+              <h3>Major parks in our locations</h3>
+              <ul>
+                <li><strong>Lagos:</strong> Lekki Conservation Centre, Freedom Park</li>
+                <li><strong>Ibadan:</strong> Obafemi Awolowo Garden, Moro Park</li>
+                <li><strong>Ado Ekiti:</strong> Ado Ekiti Gardens, Fajuyi Park</li>
+                <li><strong>Abuja:</strong> Abuja Millennium Park, National Children's Park</li>
+                <li><strong>Port Harcourt:</strong> Port Harcourt Pleasure Park, Isaac Boro Garden</li>
+                <li><strong>Ondo:</strong> Idanre Hills Park, Owo Recreation Park</li>
+                <li><strong>Akure:</strong> Arakale Park, Akure Township Park</li>
+              </ul>
             </div>
 
             <div class="booking-grid">
@@ -125,232 +166,379 @@
               <textarea id="booking-notes" placeholder="Tell us any special requirements."></textarea>
             </div>
 
-            <div class="price-summary" id="price-summary" style="margin-top: 16px; padding: 16px; background: var(--surface-bg); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: none;">
-              <h4 style="margin-bottom: 8px;">Price Summary</h4>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span>Base Fare</span>
-                <span id="base-fare-display">₦0.00</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span>Security Fee</span>
-                <span id="security-fee-display">₦500.00</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid var(--border-color); padding-top: 8px;">
-                <span>Total Amount</span>
-                <span id="total-price-display" style="color: var(--primary-light);">₦0.00</span>
-              </div>
-            </div>
-
-            <div class="field-group checkbox-group" style="margin: 20px 0; display: flex; align-items: center; gap: 10px;">
-              <input type="checkbox" id="terms-agreed" required style="width: auto;" />
-              <label for="terms-agreed" style="margin: 0; font-weight: normal;">I agree to the <a href="terms-and-conditions.html" target="_blank" style="color: var(--primary-light);">Terms and Conditions</a> for necessary information disclosure.</label>
-            </div>
-
-            <button type="submit" class="primary-button">Submit booking details</button>
+            <button type="submit" class="primary-button" id="submit-btn">Submit booking details</button>
+            <p class="hint-text" id="booking-status" aria-live="polite"></p>
           </form>
+
+          <div id="ticket-preview" class="ticket-preview hidden" aria-live="polite">
+            <div class="ticket-header">
+              <div>
+                <span class="eyebrow">Booking confirmed</span>
+                <h3>Ride ticket</h3>
+              </div>
+              <span class="status-pill status-available">Verified</span>
+            </div>
+
+            <div class="ticket-body">
+              <div class="ticket-details">
+                <p><strong>Passenger</strong><span id="ticket-passenger"></span></p>
+                <p><strong>Route</strong><span id="ticket-route"></span></p>
+                <p><strong>Bus</strong><span id="ticket-bus"></span></p>
+                <p><strong>Suite</strong><span id="ticket-suite"></span></p>
+                <p><strong>Fare</strong><span id="ticket-price"></span></p>
+                <p><strong>Park</strong><span id="ticket-park"></span></p>
+                <p><strong>Date</strong><span id="ticket-date"></span></p>
+                <p><strong>Booking code</strong><span id="ticket-id"></span></p>
+              </div>
+
+              <div class="ticket-qr-block">
+                <div id="qr-code" class="qr-code"></div>
+                <p>Scan this code at boarding</p>
+              </div>
+            </div>
+            <a href="tickets.html" class="primary-button" style="display:inline-block;margin-top:1.5rem;text-decoration:none;">View My Tickets</a>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
   <script>
-    let selectedSeat = null;
-    let holdTimerInterval = null;
+    const currentUser = (() => {
+      try {
+        const raw = localStorage.getItem('user');
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    })();
 
-    // --- Require Login ---
-    const userStr = localStorage.getItem('user');
-    const currentUser = userStr ? JSON.parse(userStr) : null;
     if (!currentUser || !currentUser.id) {
-      alert('Please sign in to book a ride.');
+      alert('Please log in to book a ride.');
       window.location.href = 'login.html';
     }
 
-    // Get tripId from URL
+    const bookingForm = document.getElementById('booking-form');
+    const ticketPreview = document.getElementById('ticket-preview');
+    const destinationSelect = document.getElementById('booking-to');
+    const bookingFrom = document.getElementById('booking-from');
+    const suiteSelect = document.getElementById('bus-suite');
+    const busSelect = document.getElementById('bus-select');
+    const estimatedFare = document.getElementById('estimated-fare');
+    const parkSelect = document.getElementById('park-destination');
+    const bookingStatus = document.getElementById('booking-status');
+    const submitBtn = document.getElementById('submit-btn');
+    const busLoadHint = document.getElementById('bus-load-hint');
+
+    let availableTrips = [];
     const urlParams = new URLSearchParams(window.location.search);
-    const tripId = urlParams.get('tripId');
-    if (!tripId) {
-      alert('No trip selected. Search for a route, pick a bus, then click Book.');
-      window.location.href = 'index.html#tickets';
-    }
+    const presetTripId = urlParams.get('tripId');
 
-    let currentTripPrice = 0;
-    let currentSecurityFee = 500;
+    const suiteMultipliers = { Standard: 1, Business: 1.32, VIP: 1.7 };
+    const SECURITY_FEE = 500;
 
-    async function fetchSeats() {
-      if (!tripId) return;
-      const seatGrid = document.getElementById('seat-grid');
-      seatGrid.innerHTML = 'Loading seats...';
+    const parksByDestination = {
+      Lagos: [
+        { value: 'Lekki Conservation Centre', label: 'Lekki Conservation Centre, Lagos' },
+        { value: 'Freedom Park', label: 'Freedom Park, Lagos' },
+      ],
+      Ibadan: [
+        { value: 'Obafemi Awolowo Garden', label: 'Obafemi Awolowo Garden, Ibadan' },
+        { value: 'Moro Park', label: 'Moro Park, Ibadan' },
+      ],
+      Akure: [
+        { value: 'Arakale Park', label: 'Arakale Park, Akure' },
+        { value: 'Akure Township Park', label: 'Akure Township Park, Akure' },
+      ],
+      Abuja: [
+        { value: 'Abuja Millennium Park', label: 'Abuja Millennium Park, Abuja' },
+        { value: "National Children's Park", label: "National Children's Park, Abuja" },
+      ],
+      'Port Harcourt': [
+        { value: 'Port Harcourt Pleasure Park', label: 'Port Harcourt Pleasure Park, Port Harcourt' },
+        { value: 'Isaac Boro Garden', label: 'Isaac Boro Garden, Port Harcourt' },
+      ],
+      Ondo: [
+        { value: 'Idanre Hills Park', label: 'Idanre Hills Park, Ondo' },
+        { value: 'Owo Recreation Park', label: 'Owo Recreation Park, Ondo' },
+      ],
+      'Ado Ekiti': [
+        { value: 'Ado Ekiti Gardens', label: 'Ado Ekiti Gardens, Ado Ekiti' },
+        { value: 'Fajuyi Park', label: 'Fajuyi Park, Ado Ekiti' },
+      ],
+    };
+
+    const populateParkOptions = (destination) => {
+      parkSelect.innerHTML = '<option value="">Select a park for your destination</option>';
+      const parks = parksByDestination[destination] || [];
+      parks.forEach((park) => {
+        const option = document.createElement('option');
+        option.value = park.value;
+        option.textContent = park.label;
+        parkSelect.appendChild(option);
+      });
+      parkSelect.disabled = parks.length === 0;
+    };
+
+    const getSelectedTrip = () => availableTrips.find((trip) => trip.id === busSelect.value);
+
+    const getFareForSelection = () => {
+      const trip = getSelectedTrip();
+      const suite = suiteSelect.value;
+      if (!trip || !suite) return 0;
+      const base = Number(trip.price || 15000);
+      const multiplier = suiteMultipliers[suite] || 1;
+      return Math.round(base * multiplier) + SECURITY_FEE;
+    };
+
+    const formatFare = (value) => (value ? `₦${value.toLocaleString()}` : '₦0');
+
+    const updateFareEstimate = () => {
+      const fare = getFareForSelection();
+      estimatedFare.textContent =
+        bookingFrom.value && destinationSelect.value && busSelect.value && suiteSelect.value
+          ? formatFare(fare)
+          : '₦0';
+    };
+
+    const populateBusOptions = () => {
+      busSelect.innerHTML = '<option value="">Select a bus</option>';
+      availableTrips.forEach((trip) => {
+        const name = trip.buses?.name || 'Bus';
+        const time = new Date(trip.departure_time).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const option = document.createElement('option');
+        option.value = trip.id;
+        option.textContent = `${name} — ${time} (${trip.available_seats} seats)`;
+        busSelect.appendChild(option);
+      });
+      busSelect.disabled = availableTrips.length === 0;
+
+      if (presetTripId && availableTrips.some((t) => t.id === presetTripId)) {
+        busSelect.value = presetTripId;
+      }
+      updateFareEstimate();
+    };
+
+    async function loadAvailableBuses() {
+      const from = bookingFrom.value;
+      const to = destinationSelect.value;
+      const date = document.getElementById('booking-date').value;
+
+      availableTrips = [];
+      populateBusOptions();
+
+      if (!from || !to || !date) {
+        busLoadHint.textContent = 'Select departure, destination, and date to see all buses.';
+        busSelect.disabled = true;
+        return;
+      }
+
+      if (from === to) {
+        busLoadHint.textContent = 'Departure and destination must be different.';
+        busSelect.disabled = true;
+        return;
+      }
+
+      busLoadHint.textContent = 'Loading all available buses…';
+      busSelect.disabled = true;
+
       try {
         await apiReady;
         if (!isLocalApi()) await wakeServer(90000);
-        const { response, data } = await fetchApi(`/trips/${tripId}/seats`);
-        if (response.ok) {
-          renderSeatGrid(data.seats);
-          
-          // Note: In a real app we'd fetch the trip details directly or have it returned with seats
-          // We will mock the price display update here until seat is selected.
-        } else {
-          const errorData = await response.json();
-          seatGrid.innerHTML = `<p style="grid-column: 1 / -1; color: red;">Error: ${errorData.message || 'Could not load seats'}</p>`;
+
+        const { response, data } = await fetchApi(
+          `/trips?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`
+        );
+
+        if (!response.ok) {
+          busLoadHint.textContent = data.message || 'Could not load buses. Please try again.';
+          return;
         }
+
+        availableTrips = data.trips || [];
+        populateBusOptions();
+        busLoadHint.textContent = availableTrips.length
+          ? `${availableTrips.length} bus(es) available for this route.`
+          : 'No buses available for this route.';
       } catch (err) {
-        console.error('Error fetching seats', err);
-        seatGrid.innerHTML = `<p style="grid-column: 1 / -1; color: red;">Failed to connect to server. ${connectionErrorMessage('refresh the page')}</p>`;
+        console.error('Bus load error:', err);
+        busLoadHint.textContent = 'Could not reach the server. ' + connectionErrorMessage('try again');
       }
     }
 
-    function renderSeatGrid(seatsFromApi) {
-      const seatGrid = document.getElementById('seat-grid');
-      seatGrid.innerHTML = '';
-      
-      const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-      
-      rows.forEach(row => {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'seat-row';
-        rowDiv.style.marginBottom = '16px';
-
-        // Left Pair
-        const leftPair = document.createElement('div');
-        leftPair.className = 'seat-pair';
-        
-        // Right Pair
-        const rightPair = document.createElement('div');
-        rightPair.className = 'seat-pair';
-
-        [1, 2].forEach(num => {
-          const seatLabel = `${row}${num}`;
-          const seatData = seatsFromApi.find(s => s.seat_number === seatLabel);
-          const status = seatData ? seatData.status : 'available';
-
-          const seatDiv = document.createElement('div');
-          seatDiv.className = `seat ${status}`;
-          seatDiv.textContent = seatLabel;
-          
-          if (status === 'available') {
-            seatDiv.onclick = () => selectSeat(seatLabel, seatData?.id);
-          }
-
-          if (num === 1) leftPair.appendChild(seatDiv);
-          else rightPair.appendChild(seatDiv);
-        });
-
-        rowDiv.appendChild(leftPair);
-        rowDiv.appendChild(rightPair);
-        seatGrid.appendChild(rowDiv);
-      });
+    async function findAvailableSeat(tripId) {
+      const { response, data } = await fetchApi(`/trips/${tripId}/seats`);
+      if (!response.ok) throw new Error(data.message || 'Could not load seats');
+      const seat = (data.seats || []).find((s) => s.status === 'available');
+      if (!seat) throw new Error('No seats available on the selected bus');
+      return seat.seat_number;
     }
 
-    async function selectSeat(seatLabel, seatId) {
-      if (selectedSeat) {
-        alert('You already have a seat selected.');
+    const setText = (elementId, value) => {
+      const element = document.getElementById(elementId);
+      if (element) element.textContent = value;
+    };
+
+    const generateQrMarkup = (code) => {
+      const size = 21;
+      const cells = Array.from({ length: size }, () => Array(size).fill(0));
+      const setFinder = (x, y) => {
+        for (let row = y; row < y + 7; row += 1) {
+          for (let col = x; col < x + 7; col += 1) {
+            const isBorder = row === y || row === y + 6 || col === x || col === x + 6;
+            cells[row][col] = isBorder ? 1 : 0;
+          }
+        }
+      };
+      setFinder(0, 0);
+      setFinder(0, size - 7);
+      setFinder(size - 7, 0);
+      const seed = code.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      for (let row = 0; row < size; row += 1) {
+        for (let col = 0; col < size; col += 1) {
+          if (cells[row][col] !== 0) continue;
+          cells[row][col] = (seed + row * 11 + col * 7 + row * col) % 2 === 0 ? 1 : 0;
+        }
+      }
+      const rects = cells.flatMap((row, rowIndex) =>
+        row.map(
+          (cell, colIndex) =>
+            `<rect width="1" height="1" x="${colIndex}" y="${rowIndex}" fill="${cell ? '#0f172a' : '#ffffff'}"></rect>`
+        )
+      );
+      return `<svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code"><rect width="21" height="21" fill="#fff"/>${rects.join('')}</svg>`;
+    };
+
+    destinationSelect.addEventListener('change', () => {
+      populateParkOptions(destinationSelect.value);
+      loadAvailableBuses();
+    });
+    bookingFrom.addEventListener('change', () => {
+      loadAvailableBuses();
+      updateFareEstimate();
+    });
+    document.getElementById('booking-date').addEventListener('change', loadAvailableBuses);
+    busSelect.addEventListener('change', updateFareEstimate);
+    suiteSelect.addEventListener('change', updateFareEstimate);
+
+    bookingForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const passenger = document.getElementById('booking-name').value.trim();
+      const email = document.getElementById('booking-email').value.trim();
+      const phone = document.getElementById('booking-phone').value.trim();
+      const from = bookingFrom.value;
+      const to = destinationSelect.value;
+      const suite = suiteSelect.value;
+      const park = parkSelect.value.trim();
+      const date = document.getElementById('booking-date').value;
+      const trip = getSelectedTrip();
+      const fare = getFareForSelection();
+
+      if (!passenger || !from || !to || !suite || !park || !date || !trip || !phone) {
+        window.alert('Please complete all required fields and select a bus.');
         return;
       }
 
+      if (from === to) {
+        window.alert('Departure and destination cannot be the same.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing booking…';
+      bookingStatus.textContent = 'Saving your booking…';
+
       try {
         await apiReady;
-        const { response, data } = await fetchApi('/seats/hold', {
+        const seatNumber = await findAvailableSeat(trip.id);
+
+        const { response: holdResp, data: holdData } = await fetchApi('/seats/hold', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trip_id: tripId, seat_number: seatLabel, user_id: currentUser.id })
+          body: JSON.stringify({
+            trip_id: trip.id,
+            seat_number: seatNumber,
+            user_id: currentUser.id,
+          }),
         });
 
-        if (response.ok) {
-          selectedSeat = seatLabel;
-          document.getElementById('selected-seat-info').classList.remove('hidden');
-          document.getElementById('display-seat-number').textContent = seatLabel;
-          
-          // Show price summary (assuming base 15000 for demo)
-          currentTripPrice = 15000;
-          document.getElementById('price-summary').style.display = 'block';
-          document.getElementById('base-fare-display').textContent = `₦${currentTripPrice.toLocaleString()}`;
-          document.getElementById('security-fee-display').textContent = `₦${currentSecurityFee.toLocaleString()}`;
-          document.getElementById('total-price-display').textContent = `₦${(currentTripPrice + currentSecurityFee).toLocaleString()}`;
-          
-          startTimer();
-          fetchSeats(); // Refresh grid
-        } else {
-          alert(data.message || 'Failed to hold seat');
+        if (!holdResp.ok) {
+          throw new Error(holdData.message || 'Could not hold seat');
         }
-      } catch (err) {
-        console.error('Hold error', err);
-        alert('Could not connect to server. ' + connectionErrorMessage('try again'));
-      }
-    }
 
-    function startTimer() {
-      let seconds = 600;
-      const timerDisplay = document.getElementById('hold-timer');
-      
-      clearInterval(holdTimerInterval);
-      holdTimerInterval = setInterval(() => {
-        seconds--;
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-        
-        if (seconds <= 0) {
-          clearInterval(holdTimerInterval);
-          alert('Seat hold expired');
-          selectedSeat = null;
-          document.getElementById('selected-seat-info').classList.add('hidden');
-          document.getElementById('price-summary').style.display = 'none';
-          fetchSeats();
-        }
-      }, 1000);
-    }
+        const notes = [
+          document.getElementById('booking-notes').value.trim(),
+          `Suite: ${suite}`,
+          `Park: ${park}`,
+        ]
+          .filter(Boolean)
+          .join(' | ');
 
-    document.getElementById('booking-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!selectedSeat) {
-        alert('Please select a seat first');
-        return;
-      }
-      
-      const termsAgreed = document.getElementById('terms-agreed').checked;
-      if (!termsAgreed) {
-        alert('You must agree to the Terms and Conditions to proceed.');
-        return;
-      }
-
-      const bookingData = {
-        user_id: currentUser.id,
-        trip_id: tripId,
-        seat_number: selectedSeat,
-        passenger_name: document.getElementById('booking-name').value,
-        passenger_email: document.getElementById('booking-email').value,
-        passenger_phone: document.getElementById('booking-phone').value,
-        kin_name: document.getElementById('kin-name').value,
-        kin_relationship: document.getElementById('kin-relationship').value,
-        kin_phone: document.getElementById('kin-phone').value,
-        id_type: document.getElementById('id-type').value,
-        id_number: document.getElementById('id-number').value,
-        notes: document.getElementById('booking-notes').value
-      };
-
-      try {
-        await apiReady;
         const { response, data } = await fetchApi('/bookings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bookingData)
+          body: JSON.stringify({
+            user_id: currentUser.id,
+            trip_id: trip.id,
+            seat_number: seatNumber,
+            passenger_name: passenger,
+            passenger_email: email,
+            passenger_phone: phone,
+            kin_name: document.getElementById('kin-name').value.trim(),
+            kin_relationship: document.getElementById('kin-relationship').value.trim(),
+            kin_phone: document.getElementById('kin-phone').value.trim(),
+            id_type: document.getElementById('id-type').value,
+            id_number: document.getElementById('id-number').value.trim(),
+            notes,
+          }),
         });
 
-        if (response.ok) {
-          alert(`Booking Confirmed! Your booking code: ${data.booking.booking_code}`);
-          window.location.href = 'tickets.html';
-        } else {
-          alert(data.message || 'Booking failed');
+        if (!response.ok) {
+          throw new Error(data.message || 'Booking failed');
         }
+
+        const bookingCode = data.booking?.booking_code || 'Confirmed';
+        setText('ticket-passenger', passenger);
+        setText('ticket-route', `${from} → ${to}`);
+        setText('ticket-bus', trip.buses?.name || 'Bus');
+        setText('ticket-suite', suite);
+        setText('ticket-price', formatFare(fare));
+        setText('ticket-park', park);
+        setText('ticket-date', date);
+        setText('ticket-id', bookingCode);
+        document.getElementById('qr-code').innerHTML = generateQrMarkup(bookingCode);
+        ticketPreview.classList.remove('hidden');
+        bookingStatus.textContent = 'Booking saved! View it anytime under My Tickets.';
+        ticketPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (err) {
-        console.error('Booking error', err);
-        alert('Could not complete booking. ' + connectionErrorMessage('try again'));
+        console.error('Booking error:', err);
+        bookingStatus.textContent = '';
+        window.alert(err.message || 'Could not complete booking. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit booking details';
       }
     });
 
     document.addEventListener('DOMContentLoaded', async () => {
-      await apiReady;
-      fetchSeats();
+      initBookingCitySelects();
+
+      const dateInput = document.getElementById('booking-date');
+      dateInput.value = urlParams.get('date') || new Date().toISOString().split('T')[0];
+
+      if (urlParams.get('from')) bookingFrom.value = urlParams.get('from');
+      if (urlParams.get('to')) destinationSelect.value = urlParams.get('to');
+
+      if (currentUser.name) document.getElementById('booking-name').value = currentUser.name;
+      if (currentUser.email) document.getElementById('booking-email').value = currentUser.email;
+      if (currentUser.phone) document.getElementById('booking-phone').value = currentUser.phone;
+
+      populateParkOptions(destinationSelect.value);
+      await loadAvailableBuses();
     });
   </script>
   <script src="nav.js"></script>

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riderr | Bus Ticketing</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="config.js?v=4"></script></head>
+  <script src="config.js?v=5"></script></head>
 <body>
   <div class="app-shell">
     <header class="site-header">
@@ -179,7 +179,7 @@
               <span>${time}</span>
               <span class="price">₦${trip.price.toLocaleString()}</span>
             </div>
-            <a href="booking.html?tripId=${trip.id}" class="primary-button" style="padding: 10px 16px; min-width: auto;">Book</a>
+            <a href="booking.html?tripId=${trip.id}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(document.getElementById('date').value)}" class="primary-button" style="padding: 10px 16px; min-width: auto;">Book</a>
           </div>
         `;
       });

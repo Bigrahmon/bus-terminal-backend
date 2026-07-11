@@ -82,8 +82,7 @@ export const createBooking = async (req, res) => {
     // Ensure we have a valid UUID for user_id
     let finalUserId = isValidUUID(user_id) ? user_id : null;
     if (!finalUserId) {
-      const { data: firstUser } = await supabase.from('users').select('id').limit(1).single();
-      if (firstUser) finalUserId = firstUser.id;
+      return res.status(401).json({ message: 'Please log in to complete your booking' });
     }
 
     // Verify seat exists and is held

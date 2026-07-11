@@ -698,6 +698,99 @@ nav {
   }
 }
 
+.hint-text {
+  margin: 0;
+  color: #88a5ff;
+  font-size: 0.85rem;
+}
+
+.price-summary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgba(79, 142, 255, 0.08);
+  border: 1px solid rgba(79, 142, 255, 0.2);
+}
+
+.price-summary strong {
+  font-size: 1.4rem;
+  color: #eef2ff;
+}
+
+.park-info-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.park-info-card ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: #c3d2fb;
+}
+
+.ticket-preview {
+  margin-top: 28px;
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ticket-preview.hidden {
+  display: none;
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ticket-body {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.ticket-details p {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.ticket-qr-block {
+  text-align: center;
+}
+
+.qr-code svg {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+}
+
+.status-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-available {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
 .features-section h3,
 .ticket-panel .panel-header h3 {
   margin-top: 0;

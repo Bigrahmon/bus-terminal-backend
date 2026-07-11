@@ -32,6 +32,21 @@ function initCitySelects() {
   populateCitySelect('to', 'Ado Ekiti');
 }
 
+function initBookingCitySelects() {
+  const fromSelect = document.getElementById('booking-from');
+  const toSelect = document.getElementById('booking-to');
+  if (fromSelect) {
+    fromSelect.innerHTML =
+      '<option value="">Select departure</option>' +
+      CITIES.map((city) => `<option value="${city}">${city}</option>`).join('');
+  }
+  if (toSelect) {
+    toSelect.innerHTML =
+      '<option value="">Select destination</option>' +
+      CITIES.map((city) => `<option value="${city}">${city}</option>`).join('');
+  }
+}
+
 // Default to production so mobile/online users never hit localhost by mistake
 let API_URL = RENDER_API;
 

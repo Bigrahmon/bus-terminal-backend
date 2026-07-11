@@ -16,7 +16,18 @@ function makeTrackingCode() {
 export async function ensureBusesExist() {
   const { data: buses, error } = await supabase.from('buses').select('*').order('name');
   if (error) throw error;
-  if (buses && buses.length > 0) return buses;
+
+  const defaultNames = DEFAULT_BUSES.map((bus) => bus.name);
+  const seenNames = new Set();
+  const unique = (buses || []).filter((bus) => {
+    if (!defaultNames.includes(bus.name) || seenNames.has(bus.name)) return false;
+    seenNames.add(bus.name);
+    return true;
+  });
+
+  if (unique.length >= DEFAULT_BUSES.length) return unique.slice(0, DEFAULT_BUSES.length);
+
+  if (unique.length > 0) return unique;
 
   const { data: inserted, error: insertError } = await supabase
     .from('buses')
