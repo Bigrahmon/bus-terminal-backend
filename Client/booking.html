@@ -525,8 +525,10 @@
       setText('ticket-price', formatFare(fare));
       setText('ticket-park', park || 'Standard stop');
       setText('ticket-date', date);
+      const trackingCode = generateTrackingCode();
       setText('ticket-seat', selectedSeat || 'Unassigned');
       setText('ticket-id', ticketId);
+      setText('ticket-tracking-code', trackingCode);
 
       const qrContainer = document.getElementById('qr-code');
       qrContainer.innerHTML = generateQrMarkup(ticketId);
@@ -552,7 +554,7 @@
             name: suite,
             plate_number: 'N/A',
           },
-          tracking_code: generateTrackingCode(),
+          tracking_code: trackingCode,
         },
         passenger_email: document.getElementById('booking-email').value.trim(),
         passenger_phone: document.getElementById('booking-phone').value.trim(),
@@ -560,7 +562,7 @@
     });
 
     function generateTrackingCode() {
-      return Array.from({ length: 6 })
+      return 'TRK-' + Array.from({ length: 6 })
         .map(() => Math.random().toString(36).charAt(2).toUpperCase())
         .join('');
     }
