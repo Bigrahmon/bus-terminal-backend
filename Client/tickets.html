@@ -340,19 +340,21 @@
   <!-- Scripts -->
   <script src="config.js?v=5"></script>
   <script>
-    // ── Auth guard ──────────────────────────────────────────────
+    // ── Auth guard and local booking fallback ──────────────────────
     const userStr = localStorage.getItem('user');
-    if (!userStr) {
-      alert('Please login to view your tickets.');
-      window.location.href = 'login.html';
-      throw new Error('Not logged in');
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    function loadLocalBookings() {
+      try {
+        return JSON.parse(localStorage.getItem('riderrBookings') || '[]');
+      } catch {
+        return [];
+      }
     }
-    const user = JSON.parse(userStr);
-    if (!user || !user.id) {
-      alert('Invalid session. Please login again.');
-      localStorage.removeItem('user');
-      window.location.href = 'login.html';
-      throw new Error('Invalid session');
+
+    function getUserBookings(bookings, userId) {
+      if (!userId) return bookings;
+      return bookings.filter((booking) => !booking.user_id || booking.user_id === userId);
     }
 
     function isValidUUID(value) {
@@ -363,8 +365,29 @@
     async function loadTickets() {
       const container = document.getElementById('tickets-list');
       const waitMsg = document.getElementById('loading-msg');
+      const localBookings = getUserBookings(loadLocalBookings(), user?.id);
+
+      if (!user) {
+        if (localBookings.length) {
+          renderTickets(localBookings, container);
+          return;
+        }
+
+        showError(
+          container,
+          'Welcome to Riderr',
+          'Sign in to sync your bookings, or book a new ticket now.',
+          'login.html'
+        );
+        return;
+      }
 
       if (!isValidUUID(user.id)) {
+        if (localBookings.length) {
+          renderTickets(localBookings, container);
+          return;
+        }
+
         showError(
           container,
           'Session expired.',
@@ -387,6 +410,11 @@
         });
 
         if (!awake) {
+          if (localBookings.length) {
+            renderTickets(localBookings, container);
+            return;
+          }
+
           showError(
             container,
             'Server took too long to respond.',
@@ -404,12 +432,20 @@
         const data = await response.json();
 
         if (response.ok) {
-          await renderTickets(data.bookings, container);
+          const combined = [...localBookings, ...data.bookings];
+          await renderTickets(combined, container);
+        } else if (localBookings.length) {
+          renderTickets(localBookings, container);
         } else {
           showError(container, data.message || 'Failed to load tickets.', data.details || data.detail || '');
         }
       } catch (err) {
         console.error('Error fetching tickets:', err);
+        if (localBookings.length) {
+          renderTickets(localBookings, container);
+          return;
+        }
+
         const detail = err?.name === 'AbortError'
           ? 'The request timed out. Click Try Again.'
           : (err?.message || 'Unknown error. Make sure the server is running and open http://localhost:3000');

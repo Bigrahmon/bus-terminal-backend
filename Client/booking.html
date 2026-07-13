@@ -17,13 +17,7 @@
           <p>Book your ride with traveler details.</p>
         </div>
       </div>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="destinations.html">Destinations</a>
-        <a href="complaint.html">Complaint</a>
-        <a href="login.html">Login</a>
-      </nav>
+      <nav></nav>
     </header>
 
     <main>
@@ -538,7 +532,47 @@
       qrContainer.innerHTML = generateQrMarkup(ticketId);
       ticketPreview.classList.remove('hidden');
       ticketPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      saveBookingLocally({
+        booking_code: ticketId,
+        passenger_name: passenger,
+        total_price: fare,
+        status: 'Confirmed',
+        departure_time: new Date(`${date}T09:00:00`).toISOString(),
+        seats: { seat_number: selectedSeat || 'Unassigned' },
+        trips: {
+          routes: {
+            from_city: from,
+            to_city: to,
+            destination_address: park || 'Selected park',
+          },
+          buses: {
+            name: suite,
+            plate_number: 'N/A',
+          },
+          tracking_code: generateTrackingCode(),
+        },
+        passenger_email: document.getElementById('booking-email').value.trim(),
+        passenger_phone: document.getElementById('booking-phone').value.trim(),
+      });
     });
+
+    function generateTrackingCode() {
+      return Array.from({ length: 6 })
+        .map(() => Math.random().toString(36).charAt(2).toUpperCase())
+        .join('');
+    }
+
+    function saveBookingLocally(booking) {
+      try {
+        const existing = JSON.parse(localStorage.getItem('riderrBookings') || '[]');
+        existing.unshift(booking);
+        localStorage.setItem('riderrBookings', JSON.stringify(existing));
+      } catch (err) {
+        console.warn('Could not save booking locally:', err);
+      }
+    }
   </script>
+  <script src="nav.js"></script>
 </body>
 </html>
