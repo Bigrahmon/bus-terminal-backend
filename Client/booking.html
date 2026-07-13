@@ -430,39 +430,61 @@
     const renderSeats = () => {
       if (!seatMap) return;
       seatMap.innerHTML = '';
-      seats.forEach((id) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'seat';
-        btn.textContent = id;
-        btn.dataset.seat = id;
-        btn.setAttribute('role', 'listitem');
 
-        if (reservedSeats.has(id)) {
-          btn.classList.add('reserved');
-          btn.disabled = true;
-          btn.title = 'Reserved';
-        } else {
-          btn.classList.add('available');
-          btn.addEventListener('click', () => {
-            if (selectedSeat === id) {
-              selectedSeat = null;
-            } else {
-              selectedSeat = id;
-            }
-            document.querySelectorAll('#seat-map .seat.selected').forEach((el) => el.classList.remove('selected'));
-            if (selectedSeat) {
-              btn.classList.add('selected');
-            } else {
-              btn.classList.remove('selected');
-            }
-            const seatDisplay = document.getElementById('ticket-seat');
-            if (seatDisplay) seatDisplay.textContent = selectedSeat || '—';
-          });
-        }
+      const layout = document.createElement('div');
+      layout.className = 'seat-layout';
 
-        seatMap.appendChild(btn);
+      seatRows.forEach((rowLabel) => {
+        const row = document.createElement('div');
+        row.className = 'seat-row';
+
+        const label = document.createElement('span');
+        label.className = 'seat-row-label';
+        label.textContent = rowLabel;
+
+        const rowSeats = document.createElement('div');
+        rowSeats.className = 'seat-row-seats';
+
+        seats.filter((id) => id.startsWith(rowLabel)).forEach((id) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'seat';
+          btn.textContent = id;
+          btn.dataset.seat = id;
+          btn.setAttribute('role', 'listitem');
+
+          if (reservedSeats.has(id)) {
+            btn.classList.add('reserved');
+            btn.disabled = true;
+            btn.title = 'Reserved';
+          } else {
+            btn.classList.add('available');
+            btn.addEventListener('click', () => {
+              if (selectedSeat === id) {
+                selectedSeat = null;
+              } else {
+                selectedSeat = id;
+              }
+              document.querySelectorAll('#seat-map .seat.selected').forEach((el) => el.classList.remove('selected'));
+              if (selectedSeat) {
+                btn.classList.add('selected');
+              } else {
+                btn.classList.remove('selected');
+              }
+              const seatDisplay = document.getElementById('ticket-seat');
+              if (seatDisplay) seatDisplay.textContent = selectedSeat || '—';
+            });
+          }
+
+          rowSeats.appendChild(btn);
+        });
+
+        row.appendChild(label);
+        row.appendChild(rowSeats);
+        layout.appendChild(row);
       });
+
+      seatMap.appendChild(layout);
     };
 
     renderSeats();
