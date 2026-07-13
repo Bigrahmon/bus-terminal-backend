@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riderr | Book a Ride</title>
-  <link rel="stylesheet" href="styles.css" />
   <script src="config.js?v=5"></script>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app-shell">
@@ -17,7 +17,13 @@
           <p>Book your ride with traveler details.</p>
         </div>
       </div>
-      <nav></nav>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="destinations.html">Destinations</a>
+        <a href="complaint.html">Complaint</a>
+        <a href="login.html">Login</a>
+      </nav>
     </header>
 
     <main>
@@ -83,13 +89,6 @@
 
             <div class="booking-grid">
               <div class="field-group">
-                <label for="bus-select">Select bus</label>
-                <select id="bus-select" required disabled>
-                  <option value="">Choose route and date first</option>
-                </select>
-                <p class="hint-text" id="bus-load-hint">All fleet buses for your route will appear here.</p>
-              </div>
-              <div class="field-group">
                 <label for="bus-suite">Bus suite</label>
                 <select id="bus-suite" required>
                   <option value="">Select suite</option>
@@ -98,9 +97,6 @@
                   <option value="VIP">VIP</option>
                 </select>
               </div>
-            </div>
-
-            <div class="booking-grid">
               <div class="price-summary">
                 <p>Estimated fare</p>
                 <strong id="estimated-fare">₦0</strong>
@@ -166,14 +162,19 @@
               <textarea id="booking-notes" placeholder="Tell us any special requirements."></textarea>
             </div>
 
-            <button type="submit" class="primary-button" id="submit-btn">Submit booking details</button>
-            <p class="hint-text" id="booking-status" aria-live="polite"></p>
+            <div class="field-group">
+              <label for="seat-map">Choose a seat</label>
+              <div id="seat-map" class="seat-map" aria-label="Available seats"></div>
+              <p class="hint-text">Select an available seat. Reserved seats are disabled.</p>
+            </div>
+
+            <button type="submit" class="primary-button">Submit booking details</button>
           </form>
 
           <div id="ticket-preview" class="ticket-preview hidden" aria-live="polite">
             <div class="ticket-header">
               <div>
-                <span class="eyebrow">Booking confirmed</span>
+                <span class="eyebrow">Generated ticket</span>
                 <h3>Ride ticket</h3>
               </div>
               <span class="status-pill status-available">Verified</span>
@@ -183,20 +184,19 @@
               <div class="ticket-details">
                 <p><strong>Passenger</strong><span id="ticket-passenger"></span></p>
                 <p><strong>Route</strong><span id="ticket-route"></span></p>
-                <p><strong>Bus</strong><span id="ticket-bus"></span></p>
                 <p><strong>Suite</strong><span id="ticket-suite"></span></p>
                 <p><strong>Fare</strong><span id="ticket-price"></span></p>
                 <p><strong>Park</strong><span id="ticket-park"></span></p>
                 <p><strong>Date</strong><span id="ticket-date"></span></p>
-                <p><strong>Booking code</strong><span id="ticket-id"></span></p>
+                <p><strong>Seat</strong><span id="ticket-seat"></span></p>
+                <p><strong>Ticket ID</strong><span id="ticket-id"></span></p>
               </div>
 
               <div class="ticket-qr-block">
                 <div id="qr-code" class="qr-code"></div>
-                <p>Scan this code at boarding</p>
+                <p>Scan this code to verify the ticket</p>
               </div>
             </div>
-            <a href="tickets.html" class="primary-button" style="display:inline-block;margin-top:1.5rem;text-decoration:none;">View My Tickets</a>
           </div>
         </div>
       </section>
@@ -204,187 +204,178 @@
   </div>
 
   <script>
-    const currentUser = (() => {
-      try {
-        const raw = localStorage.getItem('user');
-        return raw ? JSON.parse(raw) : null;
-      } catch {
-        return null;
-      }
-    })();
-
-    if (!currentUser || !currentUser.id) {
-      alert('Please log in to book a ride.');
-      window.location.href = 'login.html';
-    }
-
     const bookingForm = document.getElementById('booking-form');
     const ticketPreview = document.getElementById('ticket-preview');
     const destinationSelect = document.getElementById('booking-to');
     const bookingFrom = document.getElementById('booking-from');
     const suiteSelect = document.getElementById('bus-suite');
-    const busSelect = document.getElementById('bus-select');
     const estimatedFare = document.getElementById('estimated-fare');
     const parkSelect = document.getElementById('park-destination');
-    const bookingStatus = document.getElementById('booking-status');
-    const submitBtn = document.getElementById('submit-btn');
-    const busLoadHint = document.getElementById('bus-load-hint');
+    const params = new URLSearchParams(globalThis.location.search);
+    const initialRouteFrom = params.get('from');
+    const initialRouteTo = params.get('to');
+    const initialDate = params.get('date');
 
-    let availableTrips = [];
-    const urlParams = new URLSearchParams(window.location.search);
-    const presetTripId = urlParams.get('tripId');
-
-    const suiteMultipliers = { Standard: 1, Business: 1.32, VIP: 1.7 };
-    const SECURITY_FEE = 500;
+    const routePricing = {
+      'Lagos→Ado Ekiti': { Standard: 8500, Business: 11200, VIP: 14500 },
+      'Ibadan→Ado Ekiti': { Standard: 6800, Business: 9200, VIP: 11800 },
+      'Akure→Ado Ekiti': { Standard: 5600, Business: 7600, VIP: 9800 },
+      'Abuja→Ado Ekiti': { Standard: 12200, Business: 16400, VIP: 20500 },
+      'Port Harcourt→Ado Ekiti': { Standard: 14000, Business: 18800, VIP: 23500 },
+      'Ondo→Ado Ekiti': { Standard: 5900, Business: 7900, VIP: 9950 },
+      'Ado Ekiti→Lagos': { Standard: 8600, Business: 11300, VIP: 14700 },
+      'Ado Ekiti→Ibadan': { Standard: 6900, Business: 9300, VIP: 11950 },
+      'Ado Ekiti→Akure': { Standard: 5700, Business: 7800, VIP: 10100 },
+      'Ado Ekiti→Abuja': { Standard: 12300, Business: 16600, VIP: 20800 },
+      'Ado Ekiti→Port Harcourt': { Standard: 14100, Business: 19000, VIP: 23800 },
+      'Ado Ekiti→Ondo': { Standard: 6000, Business: 8000, VIP: 10050 }
+    };
 
     const parksByDestination = {
       Lagos: [
         { value: 'Lekki Conservation Centre', label: 'Lekki Conservation Centre, Lagos' },
-        { value: 'Freedom Park', label: 'Freedom Park, Lagos' },
+        { value: 'Freedom Park', label: 'Freedom Park, Lagos' }
       ],
       Ibadan: [
         { value: 'Obafemi Awolowo Garden', label: 'Obafemi Awolowo Garden, Ibadan' },
-        { value: 'Moro Park', label: 'Moro Park, Ibadan' },
+        { value: 'Moro Park', label: 'Moro Park, Ibadan' }
       ],
       Akure: [
         { value: 'Arakale Park', label: 'Arakale Park, Akure' },
-        { value: 'Akure Township Park', label: 'Akure Township Park, Akure' },
+        { value: 'Akure Township Park', label: 'Akure Township Park, Akure' }
       ],
       Abuja: [
         { value: 'Abuja Millennium Park', label: 'Abuja Millennium Park, Abuja' },
-        { value: "National Children's Park", label: "National Children's Park, Abuja" },
+        { value: 'National Children\'s Park', label: 'National Children\'s Park, Abuja' }
       ],
       'Port Harcourt': [
         { value: 'Port Harcourt Pleasure Park', label: 'Port Harcourt Pleasure Park, Port Harcourt' },
-        { value: 'Isaac Boro Garden', label: 'Isaac Boro Garden, Port Harcourt' },
+        { value: 'Isaac Boro Garden', label: 'Isaac Boro Garden, Port Harcourt' }
       ],
       Ondo: [
         { value: 'Idanre Hills Park', label: 'Idanre Hills Park, Ondo' },
-        { value: 'Owo Recreation Park', label: 'Owo Recreation Park, Ondo' },
+        { value: 'Owo Recreation Park', label: 'Owo Recreation Park, Ondo' }
       ],
       'Ado Ekiti': [
         { value: 'Ado Ekiti Gardens', label: 'Ado Ekiti Gardens, Ado Ekiti' },
-        { value: 'Fajuyi Park', label: 'Fajuyi Park, Ado Ekiti' },
-      ],
+        { value: 'Fajuyi Park', label: 'Fajuyi Park, Ado Ekiti' }
+      ]
     };
 
     const populateParkOptions = (destination) => {
       parkSelect.innerHTML = '<option value="">Select a park for your destination</option>';
       const parks = parksByDestination[destination] || [];
+
       parks.forEach((park) => {
         const option = document.createElement('option');
         option.value = park.value;
         option.textContent = park.label;
         parkSelect.appendChild(option);
       });
+
       parkSelect.disabled = parks.length === 0;
     };
 
-    const getSelectedTrip = () => availableTrips.find((trip) => trip.id === busSelect.value);
-
-    const getFareForSelection = () => {
-      const trip = getSelectedTrip();
-      const suite = suiteSelect.value;
-      if (!trip || !suite) return 0;
-      const base = Number(trip.price || 15000);
-      const multiplier = suiteMultipliers[suite] || 1;
-      return Math.round(base * multiplier) + SECURITY_FEE;
+    const suiteMultipliers = {
+      Standard: 1,
+      Business: 1.32,
+      VIP: 1.7
     };
 
-    const formatFare = (value) => (value ? `₦${value.toLocaleString()}` : '₦0');
+    const estimateStandardFare = () => {
+      const routeKey = `${bookingFrom.value}→${destinationSelect.value}`;
+      const exactRoute = routePricing[routeKey];
+      if (exactRoute) {
+        return exactRoute.Standard;
+      }
+
+      const sameDeparture = Object.entries(routePricing)
+        .filter(([key]) => key.startsWith(`${bookingFrom.value}→`))
+        .map(([, value]) => value.Standard);
+      const sameDestination = Object.entries(routePricing)
+        .filter(([key]) => key.endsWith(`→${destinationSelect.value}`))
+        .map(([, value]) => value.Standard);
+      const candidates = [...sameDeparture, ...sameDestination];
+
+      if (candidates.length) {
+        return candidates.reduce((sum, price) => sum + price, 0) / candidates.length;
+      }
+
+      const allStandard = Object.values(routePricing).map((route) => route.Standard);
+      return allStandard.reduce((sum, price) => sum + price, 0) / allStandard.length;
+    };
+
+    const getFareForSelection = () => {
+      const routeKey = `${bookingFrom.value}→${destinationSelect.value}`;
+      const suite = suiteSelect.value;
+      const exactRoute = routePricing[routeKey];
+      if (exactRoute && exactRoute[suite]) {
+        return exactRoute[suite];
+      }
+
+      const baseStandard = estimateStandardFare();
+      const multiplier = suiteMultipliers[suite] || 1;
+      return Math.round(baseStandard * multiplier);
+    };
+
+    const formatFare = (value) => value ? `₦${value.toLocaleString()}` : '₦0';
 
     const updateFareEstimate = () => {
       const fare = getFareForSelection();
-      estimatedFare.textContent =
-        bookingFrom.value && destinationSelect.value && busSelect.value && suiteSelect.value
-          ? formatFare(fare)
-          : '₦0';
+      if (bookingFrom.value && destinationSelect.value && suiteSelect.value) {
+        estimatedFare.textContent = formatFare(fare);
+      } else {
+        estimatedFare.textContent = '₦0';
+      }
     };
 
-    const populateBusOptions = () => {
-      busSelect.innerHTML = '<option value="">Select a bus</option>';
-      availableTrips.forEach((trip) => {
-        const name = trip.buses?.name || 'Bus';
-        const time = new Date(trip.departure_time).toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        const option = document.createElement('option');
-        option.value = trip.id;
-        option.textContent = `${name} — ${time} (${trip.available_seats} seats)`;
-        busSelect.appendChild(option);
-      });
-      busSelect.disabled = availableTrips.length === 0;
+    destinationSelect.addEventListener('change', () => {
+      populateParkOptions(destinationSelect.value);
+      updateFareEstimate();
+    });
 
-      if (presetTripId && availableTrips.some((t) => t.id === presetTripId)) {
-        busSelect.value = presetTripId;
+    bookingFrom.addEventListener('change', updateFareEstimate);
+    suiteSelect.addEventListener('change', updateFareEstimate);
+
+    const applyInitialBookingValues = () => {
+      if (initialRouteFrom) {
+        const fromOption = bookingFrom.querySelector(`option[value="${initialRouteFrom}"]`);
+        if (fromOption) bookingFrom.value = initialRouteFrom;
       }
+
+      if (initialRouteTo) {
+        const toOption = destinationSelect.querySelector(`option[value="${initialRouteTo}"]`);
+        if (toOption) destinationSelect.value = initialRouteTo;
+      }
+
+      const dateInput = document.getElementById('booking-date');
+      if (initialDate && dateInput) {
+        dateInput.value = initialDate;
+      }
+
+      populateParkOptions(destinationSelect.value);
       updateFareEstimate();
     };
 
-    async function loadAvailableBuses() {
-      const from = bookingFrom.value;
-      const to = destinationSelect.value;
-      const date = document.getElementById('booking-date').value;
-
-      availableTrips = [];
-      populateBusOptions();
-
-      if (!from || !to || !date) {
-        busLoadHint.textContent = 'Select departure, destination, and date to see all buses.';
-        busSelect.disabled = true;
-        return;
-      }
-
-      if (from === to) {
-        busLoadHint.textContent = 'Departure and destination must be different.';
-        busSelect.disabled = true;
-        return;
-      }
-
-      busLoadHint.textContent = 'Loading all available buses…';
-      busSelect.disabled = true;
-
-      try {
-        await apiReady;
-        if (!isLocalApi()) await wakeServer(90000);
-
-        const { response, data } = await fetchApi(
-          `/trips?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`
-        );
-
-        if (!response.ok) {
-          busLoadHint.textContent = data.message || 'Could not load buses. Please try again.';
-          return;
-        }
-
-        availableTrips = data.trips || [];
-        populateBusOptions();
-        busLoadHint.textContent = availableTrips.length
-          ? `${availableTrips.length} bus(es) available for this route.`
-          : 'No buses available for this route.';
-      } catch (err) {
-        console.error('Bus load error:', err);
-        busLoadHint.textContent = 'Could not reach the server. ' + connectionErrorMessage('try again');
-      }
-    }
-
-    async function findAvailableSeat(tripId) {
-      const { response, data } = await fetchApi(`/trips/${tripId}/seats`);
-      if (!response.ok) throw new Error(data.message || 'Could not load seats');
-      const seat = (data.seats || []).find((s) => s.status === 'available');
-      if (!seat) throw new Error('No seats available on the selected bus');
-      return seat.seat_number;
-    }
+    applyInitialBookingValues();
 
     const setText = (elementId, value) => {
       const element = document.getElementById(elementId);
-      if (element) element.textContent = value;
+      if (element) {
+        element.textContent = value;
+      }
     };
 
-    const generateQrMarkup = (code) => {
+    const generateTicketId = () => {
+      const now = new Date();
+      const stamp = now.toISOString().slice(0, 10).replaceAll('-', '');
+      return `RIDERR-${stamp}-${Math.floor(100 + Math.random() * 900)}`;
+    };
+
+    const generateQrMarkup = (ticketId) => {
       const size = 21;
-      const cells = Array.from({ length: size }, () => Array(size).fill(0));
+      const cells = Array.from({ length: size }, () => new Array(size).fill(0));
+
       const setFinder = (x, y) => {
         for (let row = y; row < y + 7; row += 1) {
           for (let col = x; col < x + 7; col += 1) {
@@ -393,154 +384,139 @@
           }
         }
       };
+
       setFinder(0, 0);
       setFinder(0, size - 7);
       setFinder(size - 7, 0);
-      const seed = code.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
+      const seed = ticketId.split('').reduce((sum, char) => sum + char.codePointAt(0), 0);
       for (let row = 0; row < size; row += 1) {
         for (let col = 0; col < size; col += 1) {
           if (cells[row][col] !== 0) continue;
-          cells[row][col] = (seed + row * 11 + col * 7 + row * col) % 2 === 0 ? 1 : 0;
+          const isDark = (seed + row * 11 + col * 7 + (row * col)) % 2 === 0;
+          cells[row][col] = isDark ? 1 : 0;
         }
       }
-      const rects = cells.flatMap((row, rowIndex) =>
-        row.map(
-          (cell, colIndex) =>
-            `<rect width="1" height="1" x="${colIndex}" y="${rowIndex}" fill="${cell ? '#0f172a' : '#ffffff'}"></rect>`
-        )
-      );
-      return `<svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code"><rect width="21" height="21" fill="#fff"/>${rects.join('')}</svg>`;
+
+      const rects = [];
+      cells.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+          rects.push(`<rect width="1" height="1" x="${colIndex}" y="${rowIndex}" fill="${cell ? '#0f172a' : '#ffffff'}"></rect>`);
+        });
+      });
+
+      return `
+        <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code for ticket verification">
+          ${rects.join('')}
+        </svg>
+      `;
     };
 
-    destinationSelect.addEventListener('change', () => {
-      populateParkOptions(destinationSelect.value);
-      loadAvailableBuses();
+    // Seat map: generate a small seat-list and allow selection
+    const seatMap = document.getElementById('seat-map');
+    const seatRows = ['A', 'B', 'C', 'D'];
+    const seatCols = 10;
+    const seats = [];
+    seatRows.forEach((r) => {
+      for (let i = 1; i <= seatCols; i += 1) {
+        seats.push(`${r}${i}`);
+      }
     });
-    bookingFrom.addEventListener('change', () => {
-      loadAvailableBuses();
-      updateFareEstimate();
-    });
-    document.getElementById('booking-date').addEventListener('change', loadAvailableBuses);
-    busSelect.addEventListener('change', updateFareEstimate);
-    suiteSelect.addEventListener('change', updateFareEstimate);
 
-    bookingForm.addEventListener('submit', async (event) => {
+    // Example reserved seats (could be populated from API)
+    const reservedSeats = new Set(['A1', 'B3', 'C5', 'D10']);
+    let selectedSeat = null;
+
+    const renderSeats = () => {
+      if (!seatMap) return;
+      seatMap.innerHTML = '';
+      seats.forEach((id) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'seat';
+        btn.textContent = id;
+        btn.dataset.seat = id;
+        btn.setAttribute('role', 'listitem');
+
+        if (reservedSeats.has(id)) {
+          btn.classList.add('reserved');
+          btn.disabled = true;
+          btn.title = 'Reserved';
+        } else {
+          btn.classList.add('available');
+          btn.addEventListener('click', () => {
+            if (selectedSeat === id) {
+              selectedSeat = null;
+            } else {
+              selectedSeat = id;
+            }
+            document.querySelectorAll('#seat-map .seat.selected').forEach((el) => el.classList.remove('selected'));
+            if (selectedSeat) {
+              btn.classList.add('selected');
+            } else {
+              btn.classList.remove('selected');
+            }
+            const seatDisplay = document.getElementById('ticket-seat');
+            if (seatDisplay) seatDisplay.textContent = selectedSeat || '—';
+          });
+        }
+
+        seatMap.appendChild(btn);
+      });
+    };
+
+    renderSeats();
+    // show placeholder seat
+    const seatDisplayInit = document.getElementById('ticket-seat');
+    if (seatDisplayInit) seatDisplayInit.textContent = '—';
+
+    bookingForm.addEventListener('submit', (event) => {
       event.preventDefault();
 
       const passenger = document.getElementById('booking-name').value.trim();
-      const email = document.getElementById('booking-email').value.trim();
-      const phone = document.getElementById('booking-phone').value.trim();
       const from = bookingFrom.value;
       const to = destinationSelect.value;
       const suite = suiteSelect.value;
       const park = parkSelect.value.trim();
       const date = document.getElementById('booking-date').value;
-      const trip = getSelectedTrip();
       const fare = getFareForSelection();
 
-      if (!passenger || !from || !to || !suite || !park || !date || !trip || !phone) {
-        window.alert('Please complete all required fields and select a bus.');
+      if (!passenger || !from || !to || !suite || !park || !date) {
+        globalThis.alert('Please complete the required booking details and choose a matching park.');
         return;
       }
 
       if (from === to) {
-        window.alert('Departure and destination cannot be the same.');
+        globalThis.alert('Departure and destination cannot be the same.');
         return;
       }
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Processing booking…';
-      bookingStatus.textContent = 'Saving your booking…';
-
-      try {
-        await apiReady;
-        const seatNumber = await findAvailableSeat(trip.id);
-
-        const { response: holdResp, data: holdData } = await fetchApi('/seats/hold', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            trip_id: trip.id,
-            seat_number: seatNumber,
-            user_id: currentUser.id,
-          }),
-        });
-
-        if (!holdResp.ok) {
-          throw new Error(holdData.message || 'Could not hold seat');
-        }
-
-        const notes = [
-          document.getElementById('booking-notes').value.trim(),
-          `Suite: ${suite}`,
-          `Park: ${park}`,
-        ]
-          .filter(Boolean)
-          .join(' | ');
-
-        const { response, data } = await fetchApi('/bookings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: currentUser.id,
-            trip_id: trip.id,
-            seat_number: seatNumber,
-            passenger_name: passenger,
-            passenger_email: email,
-            passenger_phone: phone,
-            kin_name: document.getElementById('kin-name').value.trim(),
-            kin_relationship: document.getElementById('kin-relationship').value.trim(),
-            kin_phone: document.getElementById('kin-phone').value.trim(),
-            id_type: document.getElementById('id-type').value,
-            id_number: document.getElementById('id-number').value.trim(),
-            notes,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Booking failed');
-        }
-
-        const bookingCode = data.booking?.booking_code || 'Confirmed';
-        setText('ticket-passenger', passenger);
-        setText('ticket-route', `${from} → ${to}`);
-        setText('ticket-bus', trip.buses?.name || 'Bus');
-        setText('ticket-suite', suite);
-        setText('ticket-price', formatFare(fare));
-        setText('ticket-park', park);
-        setText('ticket-date', date);
-        setText('ticket-id', bookingCode);
-        document.getElementById('qr-code').innerHTML = generateQrMarkup(bookingCode);
-        ticketPreview.classList.remove('hidden');
-        bookingStatus.textContent = 'Booking saved! View it anytime under My Tickets.';
-        ticketPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch (err) {
-        console.error('Booking error:', err);
-        bookingStatus.textContent = '';
-        window.alert(err.message || 'Could not complete booking. Please try again.');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit booking details';
+      const allowedParks = (parksByDestination[to] || []).map((item) => item.value);
+      if (!allowedParks.includes(park)) {
+        globalThis.alert('Please choose a park that matches your selected destination.');
+        return;
       }
-    });
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      initBookingCitySelects();
+      if (!fare) {
+        globalThis.alert('This route and suite combination is unavailable. Please choose a different route or suite.');
+        return;
+      }
 
-      const dateInput = document.getElementById('booking-date');
-      dateInput.value = urlParams.get('date') || new Date().toISOString().split('T')[0];
+      const ticketId = generateTicketId();
+      setText('ticket-passenger', passenger);
+      setText('ticket-route', `${from} → ${to}`);
+      setText('ticket-suite', suite);
+      setText('ticket-price', formatFare(fare));
+      setText('ticket-park', park || 'Standard stop');
+      setText('ticket-date', date);
+      setText('ticket-seat', selectedSeat || 'Unassigned');
+      setText('ticket-id', ticketId);
 
-      if (urlParams.get('from')) bookingFrom.value = urlParams.get('from');
-      if (urlParams.get('to')) destinationSelect.value = urlParams.get('to');
-
-      if (currentUser.name) document.getElementById('booking-name').value = currentUser.name;
-      if (currentUser.email) document.getElementById('booking-email').value = currentUser.email;
-      if (currentUser.phone) document.getElementById('booking-phone').value = currentUser.phone;
-
-      populateParkOptions(destinationSelect.value);
-      await loadAvailableBuses();
+      const qrContainer = document.getElementById('qr-code');
+      qrContainer.innerHTML = generateQrMarkup(ticketId);
+      ticketPreview.classList.remove('hidden');
+      ticketPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   </script>
-  <script src="nav.js"></script>
 </body>
 </html>

@@ -75,7 +75,7 @@
 
   // "Book Ride" CTA (always visible)
   const bookCta = document.createElement('a');
-  bookCta.href = 'index.html#tickets';
+  bookCta.href = 'booking.html';
   bookCta.textContent = 'Book Ride';
   bookCta.className = 'nav-cta';
   if (currentPage === 'booking.html') bookCta.classList.add('nav-active');
