@@ -367,9 +367,12 @@
       const waitMsg = document.getElementById('loading-msg');
       const localBookings = getUserBookings(loadLocalBookings(), user?.id);
 
+      if (localBookings.length) {
+        renderTickets(localBookings, container);
+      }
+
       if (!user) {
         if (localBookings.length) {
-          renderTickets(localBookings, container);
           return;
         }
 
@@ -384,7 +387,6 @@
 
       if (!isValidUUID(user.id)) {
         if (localBookings.length) {
-          renderTickets(localBookings, container);
           return;
         }
 
@@ -411,7 +413,6 @@
 
         if (!awake) {
           if (localBookings.length) {
-            renderTickets(localBookings, container);
             return;
           }
 
@@ -433,16 +434,13 @@
 
         if (response.ok) {
           const combined = [...localBookings, ...data.bookings];
-          await renderTickets(combined, container);
-        } else if (localBookings.length) {
-          renderTickets(localBookings, container);
-        } else {
+          renderTickets(combined, container);
+        } else if (!localBookings.length) {
           showError(container, data.message || 'Failed to load tickets.', data.details || data.detail || '');
         }
       } catch (err) {
         console.error('Error fetching tickets:', err);
         if (localBookings.length) {
-          renderTickets(localBookings, container);
           return;
         }
 

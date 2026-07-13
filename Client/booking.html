@@ -533,8 +533,10 @@
       ticketPreview.classList.remove('hidden');
       ticketPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+      const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
       saveBookingLocally({
         booking_code: ticketId,
+        user_id: currentUser?.id || null,
         passenger_name: passenger,
         total_price: fare,
         status: 'Confirmed',
